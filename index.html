@@ -1,0 +1,80 @@
+<html>
+<head>
+    <title>Teto Clicker</title>
+    <style>
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .click-animation {
+            animation: pop 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Score : <span id="score">0</span></p>
+    <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
+
+    <br><br>
+
+    <button onclick="buyBread()">Baguette [<span id="breadCost">15</span>] -- <span id="baguettes">0</span></button>
+    <button onclick="buyMiku()">Miku [<span id="MikuCost">100</span>] -- <span id="Miku">0</span></button>
+
+    <script>
+        var score = 0;
+        var clickingPower = 1;
+
+        var breadCost = 15;
+        var baguettes = 0;
+        var MikuCost = 100;
+        var Miku = 0;
+
+        function buyBread() {
+            if (score >= breadCost) {
+                score -= breadCost;
+                baguettes += 1;
+                breadCost = Math.round(breadCost * 1.15);
+
+                document.getElementById("score").innerHTML = score;
+                document.getElementById("breadCost").innerHTML = breadCost;
+                document.getElementById("baguettes").innerHTML = baguettes;
+            }
+        }
+
+        function buyMiku() {
+            if (score >= MikuCost) {
+                score -= MikuCost;
+                Miku += 1;
+                MikuCost = Math.round(MikuCost * 1.15);
+
+                document.getElementById("score").innerHTML = score;
+                document.getElementById("MikuCost").innerHTML = MikuCost;
+                document.getElementById("Miku").innerHTML = Miku;
+            }
+        }
+
+        function addToScore(amount) {
+            score += amount;
+            document.getElementById("score").innerHTML = score;
+        }
+
+        function animateTeto() {
+            const teto = document.getElementById("teto");
+            teto.classList.add("click-animation");
+
+            setTimeout(() => {
+                teto.classList.remove("click-animation");
+            }, 200); 
+        }
+
+        setInterval(function () {
+            score += baguettes;
+            score += Miku;
+            document.getElementById("score").innerHTML = score;
+        }, 1000);
+    </script>
+</body>
+</html>
