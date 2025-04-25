@@ -2,6 +2,24 @@
 <head>
     <title>Teto Clicker</title>
     <style>
+
+        .sectionLeft {
+            float: left;
+            width: 80%;
+        }
+
+        
+        .sectionRight {
+            float: right;
+            width: 20%;
+        }
+
+        .scorecontainer {
+            text-align: center;
+
+        }
+
+
         @keyframes pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
@@ -11,18 +29,31 @@
         .click-animation {
             animation: pop 0.2s ease;
         }
+
+
     </style>
 </head>
 
 <body>
-    <p>Score : <span id="score">0</span></p>
+    <div class="sectionLeft">
+        <div class="scorecontainer">
+
+<span id="score">0</span> Teto <br>
+<span id="scorepersecond">0 </span>Teto per second
+</div>
+
+
     <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
+</div>
 
     <br><br>
+
+    <div class="sectionRight">
 
     <button onclick="buyBread()">Baguette [<span id="breadCost">15</span>] -- <span id="baguettes">0</span></button>
     <button onclick="buyMiku()">Miku [<span id="MikuCost">100</span>] -- <span id="Miku">0</span></button>
 
+</div>
     <script>
         var score = 0;
         var clickingPower = 1;
@@ -31,6 +62,9 @@
         var baguettes = 0;
         var MikuCost = 100;
         var Miku = 0;
+
+
+    
 
         function buyBread() {
             if (score >= breadCost) {
@@ -41,6 +75,7 @@
                 document.getElementById("score").innerHTML = score;
                 document.getElementById("breadCost").innerHTML = breadCost;
                 document.getElementById("baguettes").innerHTML = baguettes;
+                updateScorePerSecond();
             }
         }
 
@@ -53,6 +88,7 @@
                 document.getElementById("score").innerHTML = score;
                 document.getElementById("MikuCost").innerHTML = MikuCost;
                 document.getElementById("Miku").innerHTML = Miku;
+                updateScorePerSecond();
             }
         }
 
@@ -61,6 +97,11 @@
             document.getElementById("score").innerHTML = score;
         }
 
+        function updateScorePerSecond() {
+            scorePerSecond = baguettes + Miku * 5;
+            document.getElementById("scorepersecond").innerHTM = scorePerSecond;
+            updateScorePerSecond();
+        }
         function animateTeto() {
             const teto = document.getElementById("teto");
             teto.classList.add("click-animation");
@@ -72,9 +113,11 @@
 
         setInterval(function () {
             score += baguettes;
-            score += Miku;
+            score += Miku * 5;
             document.getElementById("score").innerHTML = score;
+            document.title = score + " Tetos - Teto Clicker";
         }, 1000);
+
     </script>
 </body>
 </html>
