@@ -16,6 +16,9 @@
 
         .scorecontainer {
             text-align: center;
+            background-color: rgb(238, 238, 238, 0.6);
+            width: 50%;
+            padding: 10px;
 
         }
 
@@ -36,17 +39,22 @@
 
 <body>
     <div class="sectionLeft">
+        <center>
         <div class="scorecontainer">
 
 <span id="score">0</span> Teto <br>
-<span id="scorepersecond">0 </span>Teto per second
+<span id="scorepersecond">0 </span> Teto per second
 </div>
-
+<br>
+<div class="clickerContainer"></div>
 
     <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
 </div>
+</center>
+</div>
 
-    <br><br>
+    
+    <br>
 
     <div class="sectionRight">
 
@@ -98,10 +106,11 @@
         }
 
         function updateScorePerSecond() {
-            scorePerSecond = baguettes + Miku * 5;
-            document.getElementById("scorepersecond").innerHTM = scorePerSecond;
-            updateScorePerSecond();
-        }
+    var scorePerSecond = baguettes + Miku * 5;
+    document.getElementById("scorepersecond").innerHTML = scorePerSecond;
+    updateScorePerSecond();
+}
+
         function animateTeto() {
             const teto = document.getElementById("teto");
             teto.classList.add("click-animation");
