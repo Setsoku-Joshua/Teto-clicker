@@ -1,27 +1,48 @@
+<!DOCTYPE html>
 <html>
 <head>
     <title>Teto Clicker</title>
     <style>
-
-        .sectionLeft {
-            float: left;
-            width: 80%;
+        * {
+            box-sizing: border-box;
         }
 
-        
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f7f2f5;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .sectionLeft, .sectionRight {
+            padding: 10px;
+        }
+
+        .sectionLeft {
+            flex: 1 1 60%;
+            text-align: center;
+        }
+
         .sectionRight {
-            float: right;
-            width: 20%;
+            flex: 1 1 35%;
+            max-width: 400px;
         }
 
         .scorecontainer {
-            text-align: center;
-            background-color: rgb(238, 238, 238, 0.6);
-            width: 50%;
+            background-color: rgba(238, 200, 214, 0.6);
             padding: 10px;
-
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto;
+            max-width: 300px;
         }
-
 
         @keyframes pop {
             0% { transform: scale(1); }
@@ -33,99 +54,262 @@
             animation: pop 0.2s ease;
         }
 
+        .clickerContainer img {
+            position: relative;
+        }
 
+        .shop-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 15px;
+            background-color: rgba(238, 200, 214, 0.6);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .shop-button:hover {
+            background-color: rgba(238, 200, 214, 0.8);
+        }
+
+        .shop-button img {
+            width: 64px;
+            height: 64px;
+            border: 2px solid #999;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+
+        .shop-button div {
+            flex-grow: 1;
+            padding: 0 10px;
+        }
+
+        .shop-button div p:first-child {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .shop-button div p:last-child {
+            font-size: 14px;
+            margin: 0;
+            color: #2d802f;
+        }
+
+        .shop-button span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #222;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        #teto {
+            margin-top: 10px;
+        }
+
+        #saveBtn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: #d17299;
+            color: white;
+            cursor: pointer;
+        }
+
+        #saveBtn:hover {
+            background-color: #ba5d86;
+        }
+        #resetBtn {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #c74747;
+    color: white;
+    cursor: pointer;
+}
+
+#resetBtn:hover {
+    background-color: #a83737;
+}
+
+
+        @media screen and (max-width: 768px) {
+            .sectionLeft, .sectionRight {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+        }
+
+        
     </style>
 </head>
-
 <body>
-    <div class="sectionLeft">
-        <center>
-        <div class="scorecontainer">
+    <div class="container">
+        <div class="sectionLeft">
+            <div class="scorecontainer">
+                <span id="score">0</span> Teto <br>
+                <span id="scorepersecond">0</span> Teto per second
+            </div>
 
-<span id="score">0</span> Teto <br>
-<span id="scorepersecond">0 </span> Teto per second
-</div>
-<br>
-<div class="clickerContainer"></div>
+            <div class="clickerContainer">
+                <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
+            </div>
 
-    <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
-</div>
-</center>
-</div>
+            <button id="saveBtn" onclick="saveGame()">Save Game</button>
+            <button id="resetBtn" onclick="resetGame()">Reset Game</button>
 
-    
-    <br>
+        </div>
 
-    <div class="sectionRight">
+        <div class="sectionRight">
+            <div class="shop-button" onclick="buyBread()">
+                <img src="images/Bread.png" alt="Bread">
+                <div>
+                    <p>Baguette</p>
+                    <p><span id="breadCost">15</span> Teto</p>
+                </div>
+                <span id="baguettes">0</span>
+            </div>
 
-    <button onclick="buyBread()">Baguette [<span id="breadCost">15</span>] -- <span id="baguettes">0</span></button>
-    <button onclick="buyMiku()">Miku [<span id="MikuCost">100</span>] -- <span id="Miku">0</span></button>
+            <div class="shop-button" onclick="buyMiku()">
+                <img src="images/Miku.png" alt="Miku">
+                <div>
+                    <p>Miku</p>
+                    <p><span id="MikuCost">100</span> Teto</p>
+                </div>
+                <span id="Miku">0</span>
+            </div>
 
-</div>
+            <div class="shop-button" onclick="buyPear()">
+                <img src="images/pear.png" alt="Pear">
+                <div>
+                    <p>Pear</p>
+                    <p><span id="PearCost">1000</span> Teto</p>
+                </div>
+                <span id="Pear">0</span>
+            </div>
+        </div>
+    </div>
+
     <script>
-        var score = 0;
-        var clickingPower = 1;
+        let score = 0;
+        let clickingPower = 1;
 
-        var breadCost = 15;
-        var baguettes = 0;
-        var MikuCost = 100;
-        var Miku = 0;
-
-
-    
+        let breadCost = 15;
+        let baguettes = 0;
+        let MikuCost = 100;
+        let Miku = 0;
+        let PearCost = 1000;
+        let Pear = 0;
 
         function buyBread() {
             if (score >= breadCost) {
                 score -= breadCost;
-                baguettes += 1;
+                baguettes++;
                 breadCost = Math.round(breadCost * 1.15);
-
-                document.getElementById("score").innerHTML = score;
-                document.getElementById("breadCost").innerHTML = breadCost;
-                document.getElementById("baguettes").innerHTML = baguettes;
-                updateScorePerSecond();
+                updateDisplay();
             }
         }
 
         function buyMiku() {
             if (score >= MikuCost) {
                 score -= MikuCost;
-                Miku += 1;
+                Miku++;
                 MikuCost = Math.round(MikuCost * 1.15);
-
-                document.getElementById("score").innerHTML = score;
-                document.getElementById("MikuCost").innerHTML = MikuCost;
-                document.getElementById("Miku").innerHTML = Miku;
-                updateScorePerSecond();
+                updateDisplay();
+            }
+        }
+        
+         function buyPear() {
+            if (score >= PearCost) {
+                score -= PearCost;
+                Pear++;
+                PearCost = Math.round(PearCost * 1.15);
+                updateDisplay();
             }
         }
 
         function addToScore(amount) {
             score += amount;
-            document.getElementById("score").innerHTML = score;
+            updateDisplay();
         }
 
-        function updateScorePerSecond() {
-    var scorePerSecond = baguettes + Miku * 5;
-    document.getElementById("scorepersecond").innerHTML = scorePerSecond;
-    updateScorePerSecond();
-}
+        function updateDisplay() {
+            document.getElementById("score").textContent = score;
+            document.getElementById("breadCost").textContent = breadCost;
+            document.getElementById("baguettes").textContent = baguettes;
+            document.getElementById("MikuCost").textContent = MikuCost;
+            document.getElementById("Miku").textContent = Miku;
+            document.getElementById("PearCost").textContent = PearCost;
+            document.getElementById("Pear").textContent = Pear;
+            document.getElementById("scorepersecond").textContent = baguettes + Miku * 5;
+        }
 
         function animateTeto() {
             const teto = document.getElementById("teto");
             teto.classList.add("click-animation");
-
-            setTimeout(() => {
-                teto.classList.remove("click-animation");
-            }, 200); 
+            setTimeout(() => teto.classList.remove("click-animation"), 200);
         }
 
-        setInterval(function () {
-            score += baguettes;
-            score += Miku * 5;
-            document.getElementById("score").innerHTML = score;
-            document.title = score + " Tetos - Teto Clicker";
+        setInterval(() => {
+            score += baguettes + Miku * 5 + Pear * 10;
+            updateDisplay();
+            document.title = `${score} Tetos - Teto Clicker`;
         }, 1000);
+
+        function saveGame() {
+            const gameSave = {
+                score,
+                clickingPower,
+                breadCost,
+                baguettes,
+                MikuCost,
+                Miku,
+                PearCost,
+                Pear
+            };
+            localStorage.setItem("gameSave", JSON.stringify(gameSave));
+        }
+
+        function loadGame() {
+            const savedGame = JSON.parse(localStorage.getItem("gameSave"));
+            if (!savedGame) return;
+
+            if (typeof savedGame.score !== 'undefined') score = savedGame.score;
+            if (typeof savedGame.clickingPower !== 'undefined') clickingPower = savedGame.clickingPower;
+            if (typeof savedGame.breadCost !== 'undefined') breadCost = savedGame.breadCost;
+            if (typeof savedGame.baguettes !== 'undefined') baguettes = savedGame.baguettes;
+            if (typeof savedGame.MikuCost !== 'undefined') MikuCost = savedGame.MikuCost;
+            if (typeof savedGame.Miku !== 'undefined') Miku = savedGame.Miku;
+            if (typeof savedGame.PearCost !== 'undefined') PearCost = savedGame.PearCost;
+            if (typeof savedGame.Pear !== 'undefined') Pear = savedGame.Pear;
+
+            updateDisplay();
+        }
+
+        window.onload = loadGame;
+
+        setInterval(saveGame, 3000);
+
+        function resetGame() {
+    localStorage.removeItem("gameSave");
+    score = 0;
+    clickingPower = 1;
+    breadCost = 15;
+    baguettes = 0;
+    MikuCost = 100;
+    Miku = 0;
+    PearCost = 1000;
+    Pear = 0;
+    updateDisplay();
+}
 
     </script>
 </body>
