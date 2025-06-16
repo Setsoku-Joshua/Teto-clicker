@@ -148,6 +148,48 @@
             }
         }
 
+        @keyframes fade {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+#teto.event-active {
+    animation: fade 1s infinite;
+}
+
+#bonusIndicator {
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: gold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    z-index: 1000;
+}
+
+#bonusTeto {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    display: none;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 2s ease-out;
+    z-index: 999;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+
+
         
     </style>
 </head>
@@ -167,6 +209,8 @@
             <button id="resetBtn" onclick="resetGame()">Reset Game</button>
 
         </div>
+
+        
 
         <div class="sectionRight">
             <div class="shop-button" onclick="buyBread()">
@@ -197,6 +241,8 @@
             </div>
         </div>
     </div>
+
+
 
     <script>
         let score = 0;
@@ -237,9 +283,9 @@
         }
 
         function addToScore(amount) {
-            score += amount;
-            updateDisplay();
-        }
+    score += amount * bonusMultiplier;
+    updateDisplay();
+}
 
         function updateDisplay() {
             document.getElementById("score").textContent = score;
@@ -259,10 +305,10 @@
         }
 
         setInterval(() => {
-            score += baguettes + Miku * 5 + Pear * 10;
-            updateDisplay();
-            document.title = `${score} Tetos - Teto Clicker`;
-        }, 1000);
+    score += (baguettes + Miku * 5 + Pear * 10) * bonusMultiplier;
+    updateDisplay();
+    document.title = `${score} Tetos - Teto Clicker`;
+}, 1000);
 
         function saveGame() {
             const gameSave = {
@@ -296,7 +342,7 @@
 
         window.onload = loadGame;
 
-        setInterval(saveGame, 3000);
+        setInterval(saveGame, 3000);    
 
         function resetGame() {
     localStorage.removeItem("gameSave");
@@ -311,6 +357,79 @@
     updateDisplay();
 }
 
+let bonusActive = false;
+let bonusMultiplier = 1;
+let eventActive = false;
+const bonusTeto = document.getElementById("bonusTeto");
+
+// Trigger event every 10s with 20% chance
+setInterval(() => {
+    if (Math.random() < 0.5 && !eventActive && !bonusActive) {
+        showBonusTeto();
+    }
+}, 5000);
+
+// Show bonus image at random position
+function showBonusTeto() {
+    eventActive = true;
+    
+    const viewportWidth = window.innerWidth - 100;
+    const viewportHeight = window.innerHeight - 100;
+
+    const randomX = Math.random() * viewportWidth;
+    const randomY = Math.random() * viewportHeight;
+
+    bonusTeto.style.left = `${randomX}px`;
+    bonusTeto.style.top = `${randomY}px`;
+    bonusTeto.style.display = "block";
+    bonusTeto.style.opacity = 1;
+
+    // Start fade-out
+    setTimeout(() => {
+        bonusTeto.style.opacity = 0;
+        setTimeout(() => {
+            bonusTeto.style.display = "none";
+            eventActive = false;
+        }, 2000);
+    }, 2000);
+}
+
+// On click, activate bonus
+bonusTeto.addEventListener("click", () => {
+    if (!eventActive) return;
+    activateBonus();
+    bonusTeto.style.display = "none";
+    eventActive = false;
+});
+
+// Bonus activation
+function activateBonus() {
+    bonusActive = true;
+    bonusMultiplier = 2;
+    document.getElementById('bonusIndicator').style.display = 'block';
+
+    setTimeout(() => {
+        bonusActive = false;
+        bonusMultiplier = 1;
+        document.getElementById('bonusIndicator').style.display = 'none';
+    }, 5000);
+}
+
+
+
     </script>
+
+
+<img id="bonusTeto" src="images/tetoclick.png" alt="Bonus Teto" style="
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    display: none;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 2s ease-out;
+    z-index: 999;
+">
+
 </body>
 </html>

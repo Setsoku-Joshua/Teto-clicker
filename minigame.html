@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teto Pear Catcher</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f8ff;
+            font-family: Arial, sans-serif;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #player {
+            position: absolute;
+            width: 120px; /* Increased from 80px */
+            height: 120px; /* Increased from 80px */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        .pear {
+            position: absolute;
+            width: 100px; /* Increased from 40px */
+            height: 100px; /* Increased from 40px */
+            z-index: 5;
+        }
+        
+        #scoreDisplay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            z-index: 20;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            color: white;
+        }
+        
+        #startButton {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 20px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #startButton:hover {
+            background-color: #ff5252;
+        }
+        
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            color: white;
+        }
+        
+        #restartButton {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 20px;
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        #restartButton:hover {
+            background-color: #3dbeb4;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="scoreDisplay">Pears: 0</div>
+        <img id="player" src="images/tetoclick.png" alt="Teto">
+        
+        <div id="startScreen">
+            <h1>Teto Pear Catcher</h1>
+            <p>Use arrow keys or A/D to move Teto and catch falling pears!</p>
+            <button id="startButton">Start Game</button>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h1>Game Over!</h1>
+            <p id="finalScore">You caught 0 pears!</p>
+            <button id="restartButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScore = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
+        
+        // Game variables
+        let score = 0;
+        let gameActive = false;
+        let playerX = window.innerWidth / 2;
+        const playerSpeed = 10;
+        let pears = [];
+        let gameLoopId;
+        let pearSpawnInterval;
+        let gameTime = 30000; // 30 seconds game duration
+        let timeLeft = gameTime;
+        
+        // Player movement
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            a: false,
+            d: false
+        };
+        
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) {
+                keys[e.key] = true;
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+        
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        
+        // Start game function
+        function startGame() {
+            // Reset game state
+            score = 0;
+            timeLeft = gameTime;
+            scoreDisplay.textContent = `Pears: ${score}`;
+            
+            // Clear any existing pears
+            pears.forEach(pear => pear.element.remove());
+            pears = [];
+            
+            // Hide screens
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // Position player
+            playerX = window.innerWidth / 2;
+            updatePlayerPosition();
+            
+            // Start game loops
+            gameActive = true;
+            pearSpawnInterval = setInterval(spawnPear, 800);
+            gameLoopId = requestAnimationFrame(gameLoop);
+            
+            // Start timer
+            setTimeout(endGame, gameTime);
+        }
+        
+        // End game function
+        function endGame() {
+            gameActive = false;
+            clearInterval(pearSpawnInterval);
+            cancelAnimationFrame(gameLoopId);
+            
+            // Show game over screen
+            finalScore.textContent = `You caught ${score} pears!`;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameActive) return;
+            
+            // Move player
+            if (keys.ArrowLeft || keys.a) {
+                playerX -= playerSpeed;
+            }
+            if (keys.ArrowRight || keys.d) {
+                playerX += playerSpeed;
+            }
+            
+            // Keep player within bounds
+            playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
+            updatePlayerPosition();
+            
+            // Move pears and check collisions
+            pears.forEach((pear, index) => {
+                pear.y += pear.speed;
+                pear.element.style.top = `${pear.y}px`;
+                
+                // Check if pear is caught
+                if (
+                    pear.y + 70 >= window.innerHeight - 140 && 
+                    pear.y <= window.innerHeight - 20 &&
+                    pear.x >= playerX - 60 && 
+                    pear.x <= playerX + 60
+                ) {
+                    // Pear caught!
+                    pear.element.remove();
+                    pears.splice(index, 1);
+                    score++;
+                    scoreDisplay.textContent = `Pears: ${score}`;
+                }
+                // Check if pear missed
+                else if (pear.y > window.innerHeight) {
+                    pear.element.remove();
+                    pears.splice(index, 1);
+                }
+            });
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Spawn a new pear
+        function spawnPear() {
+            if (!gameActive) return;
+            
+            const pear = document.createElement('img');
+            pear.className = 'pear';
+            pear.src = 'images/pear.png';
+            pear.alt = 'Pear';
+            
+            const x = Math.random() * (window.innerWidth - 70);
+            const speed = 3 + Math.random() * 3; // Random speed between 3-6
+            
+            pear.style.left = `${x}px`;
+            pear.style.top = '0px';
+            
+            gameContainer.appendChild(pear);
+            
+            pears.push({
+                element: pear,
+                x: x,
+                y: 0,
+                speed: speed
+            });
+        }
+        
+        // Update player position
+        function updatePlayerPosition() {
+            player.style.left = `${playerX - 60}px`;
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (gameActive) {
+                playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
+                updatePlayerPosition();
+            }
+        });
+    </script>
+</body>
+</html>
