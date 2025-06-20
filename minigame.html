@@ -18,8 +18,8 @@
         
         #player {
             position: absolute;
-            width: 120px; /* Increased from 80px */
-            height: 120px; /* Increased from 80px */
+            width: 120px; 
+            height: 120px; 
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -28,8 +28,8 @@
         
         .pear {
             position: absolute;
-            width: 100px; /* Increased from 40px */
-            height: 100px; /* Increased from 40px */
+            width: 100px; 
+            height: 100px; 
             z-index: 5;
         }
         
@@ -125,7 +125,6 @@
     </div>
 
     <script>
-        // Game elements
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         const scoreDisplay = document.getElementById('scoreDisplay');
@@ -135,18 +134,16 @@
         const finalScore = document.getElementById('finalScore');
         const restartButton = document.getElementById('restartButton');
         
-        // Game variables
         let score = 0;
         let gameActive = false;
-        let playerX = window.innerWidth / 2;
-        const playerSpeed = 10;
+        let playerY = window.innerWidth / 2;
+        const playerSpeed = 8;
         let pears = [];
         let gameLoopId;
         let pearSpawnInterval;
-        let gameTime = 30000; // 30 seconds game duration
+        let gameTime = 30000; 
         let timeLeft = gameTime;
         
-        // Player movement
         const keys = {
             ArrowLeft: false,
             ArrowRight: false,
@@ -154,7 +151,6 @@
             d: false
         };
         
-        // Event listeners
         window.addEventListener('keydown', (e) => {
             if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) {
                 keys[e.key] = true;
@@ -170,50 +166,44 @@
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
         
-        // Start game function
         function startGame() {
-            // Reset game state
             score = 0;
             timeLeft = gameTime;
             scoreDisplay.textContent = `Pears: ${score}`;
             
-            // Clear any existing pears
             pears.forEach(pear => pear.element.remove());
             pears = [];
             
-            // Hide screens
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
             
-            // Position player
             playerX = window.innerWidth / 2;
             updatePlayerPosition();
             
-            // Start game loops
             gameActive = true;
             pearSpawnInterval = setInterval(spawnPear, 800);
             gameLoopId = requestAnimationFrame(gameLoop);
             
-            // Start timer
             setTimeout(endGame, gameTime);
         }
         
-        // End game function
         function endGame() {
             gameActive = false;
             clearInterval(pearSpawnInterval);
             cancelAnimationFrame(gameLoopId);
             
-            // Show game over screen
+            window.parent.postMessage({
+                type: 'minigameScore',
+                score: score
+            }, '*');
+            
             finalScore.textContent = `You caught ${score} pears!`;
             gameOverScreen.style.display = 'flex';
         }
         
-        // Game loop
         function gameLoop() {
             if (!gameActive) return;
             
-            // Move player
             if (keys.ArrowLeft || keys.a) {
                 playerX -= playerSpeed;
             }
@@ -221,29 +211,24 @@
                 playerX += playerSpeed;
             }
             
-            // Keep player within bounds
             playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
             updatePlayerPosition();
             
-            // Move pears and check collisions
             pears.forEach((pear, index) => {
                 pear.y += pear.speed;
                 pear.element.style.top = `${pear.y}px`;
                 
-                // Check if pear is caught
                 if (
                     pear.y + 70 >= window.innerHeight - 140 && 
                     pear.y <= window.innerHeight - 20 &&
                     pear.x >= playerX - 60 && 
                     pear.x <= playerX + 60
                 ) {
-                    // Pear caught!
                     pear.element.remove();
                     pears.splice(index, 1);
                     score++;
                     scoreDisplay.textContent = `Pears: ${score}`;
                 }
-                // Check if pear missed
                 else if (pear.y > window.innerHeight) {
                     pear.element.remove();
                     pears.splice(index, 1);
@@ -253,7 +238,6 @@
             requestAnimationFrame(gameLoop);
         }
         
-        // Spawn a new pear
         function spawnPear() {
             if (!gameActive) return;
             
@@ -262,8 +246,8 @@
             pear.src = 'images/pear.png';
             pear.alt = 'Pear';
             
-            const x = Math.random() * (window.innerWidth - 70);
-            const speed = 3 + Math.random() * 3; // Random speed between 3-6
+            const x = Math.random() * (window.innerWidth - 60);
+            const speed = 3 + Math.random() * 3; 
             
             pear.style.left = `${x}px`;
             pear.style.top = '0px';
@@ -278,12 +262,10 @@
             });
         }
         
-        // Update player position
         function updatePlayerPosition() {
             player.style.left = `${playerX - 60}px`;
         }
         
-        // Handle window resize
         window.addEventListener('resize', () => {
             if (gameActive) {
                 playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
