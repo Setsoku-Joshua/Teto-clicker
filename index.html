@@ -140,6 +140,30 @@
     background-color: #a83737;
 }
 
+#loadBtn {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #d17299;
+    color: white;
+    cursor: pointer;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#loadBtn:hover {
+    background-color: #ba5d86;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
+}
 
         @media screen and (max-width: 768px) {
             .sectionLeft, .sectionRight {
@@ -205,8 +229,11 @@
                 <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
             </div>
 
-            <button id="saveBtn" onclick="saveGame()">Save Game</button>
-            <button id="resetBtn" onclick="resetGame()">Reset Game</button>
+            <div class="button-group">
+                <button id="saveBtn" onclick="saveGame()">Save Game</button>
+                <button id="resetBtn" onclick="resetGame()">Reset Game</button>
+                <button id="loadBtn" onclick="loadGame()">Load Game</button>
+            </div>
 
         </div>
 
@@ -279,6 +306,11 @@
                 Pear++;
                 PearCost = Math.round(PearCost * 1.15);
                 updateDisplay();
+                
+                // 10% chance to trigger minigame when pear is purchased
+                if (Math.random() < 100) {
+                    showMinigame();
+                }
             }
         }
 
@@ -340,80 +372,131 @@
             updateDisplay();
         }
 
-        window.onload = loadGame;
-
-        setInterval(saveGame, 3000);    
-
         function resetGame() {
-    localStorage.removeItem("gameSave");
-    score = 0;
-    clickingPower = 1;
-    breadCost = 15;
-    baguettes = 0;
-    MikuCost = 100;
-    Miku = 0;
-    PearCost = 1000;
-    Pear = 0;
-    updateDisplay();
-}
+            localStorage.removeItem("gameSave");
+            score = 0;
+            clickingPower = 1;
+            breadCost = 15;
+            baguettes = 0;
+            MikuCost = 100;
+            Miku = 0;
+            PearCost = 1000;
+            Pear = 0;
+            updateDisplay();
+        }
 
-let bonusActive = false;
-let bonusMultiplier = 1;
-let eventActive = false;
-const bonusTeto = document.getElementById("bonusTeto");
+        window.onload = function() {
+            loadGame();
+            // --- Bonus Teto Feature ---
+            let bonusActive = false;
+            let bonusMultiplier = 1;
+            let eventActive = false;
+            const bonusTeto = document.getElementById("bonusTeto");
+            const mainTeto = document.getElementById("teto");
+            let bonusIndicator = document.getElementById('bonusIndicator');
+            if (!bonusIndicator) {
+                bonusIndicator = document.createElement('div');
+                bonusIndicator.id = 'bonusIndicator';
+                bonusIndicator.textContent = 'BONUS ACTIVE!';
+                document.body.appendChild(bonusIndicator);
+            }
+            const redGlow = '0 0 30px 10px red';
+            setInterval(() => {
+                if (!eventActive && !bonusActive) {
+                    showBonusTeto();
+                }
+            }, 10000 + Math.random() * 10000);
+            function showBonusTeto() {
+                eventActive = true;
+                const viewportWidth = window.innerWidth - 100;
+                const viewportHeight = window.innerHeight - 100;
+                const randomX = Math.random() * viewportWidth;
+                const randomY = Math.random() * viewportHeight;
+                bonusTeto.style.left = `${randomX}px`;
+                bonusTeto.style.top = `${randomY}px`;
+                bonusTeto.style.display = "block";
+                bonusTeto.style.opacity = 1;
+                bonusTeto.style.border = '4px solid #ff0000';
+                bonusTeto.style.background = 'rgba(255,255,255,0.5)';
+                console.log('Bonus Teto appeared at', randomX, randomY);
+                setTimeout(() => {
+                    if (eventActive) {
+                        bonusTeto.style.opacity = 0;
+                        setTimeout(() => {
+                            bonusTeto.style.display = "none";
+                            eventActive = false;
+                        }, 500);
+                    }
+                }, 2500);
+            }
+            bonusTeto.onclick = () => {
+                if (!eventActive) return;
+                activateBonus();
+                bonusTeto.style.display = "none";
+                eventActive = false;
+            };
+            function activateBonus() {
+                bonusActive = true;
+                bonusMultiplier = 2;
+                bonusIndicator.style.display = 'block';
+                mainTeto.style.boxShadow = redGlow;
+                setTimeout(() => {
+                    bonusActive = false;
+                    bonusMultiplier = 1;
+                    bonusIndicator.style.display = 'none';
+                    mainTeto.style.boxShadow = '';
+                }, 5000);
+            }
+            // Re-assign addToScore and interval to use the correct bonusMultiplier
+            window.addToScore = function(amount) {
+                score += amount * bonusMultiplier;
+                updateDisplay();
+            }
+            setInterval(() => {
+                score += (baguettes + Miku * 5 + Pear * 10) * bonusMultiplier;
+                updateDisplay();
+                document.title = `${score} Tetos - Teto Clicker`;
+            }, 1000);
+        };
 
-// Trigger event every 10s with 20% chance
-setInterval(() => {
-    if (Math.random() < 0.5 && !eventActive && !bonusActive) {
-        showBonusTeto();
-    }
-}, 5000);
+        function showMinigame() {
+            const overlay = document.createElement('div');
+            overlay.id = 'minigameOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
 
-// Show bonus image at random position
-function showBonusTeto() {
-    eventActive = true;
-    
-    const viewportWidth = window.innerWidth - 100;
-    const viewportHeight = window.innerHeight - 100;
+            const iframe = document.createElement('iframe');
+            iframe.src = 'minigame.html';
+            iframe.style.cssText = `
+                width: 80%;
+                height: 80%;
+                border: none;
+                border-radius: 10px;
+            `;
 
-    const randomX = Math.random() * viewportWidth;
-    const randomY = Math.random() * viewportHeight;
+            overlay.appendChild(iframe);
+            document.body.appendChild(overlay);
 
-    bonusTeto.style.left = `${randomX}px`;
-    bonusTeto.style.top = `${randomY}px`;
-    bonusTeto.style.display = "block";
-    bonusTeto.style.opacity = 1;
-
-    // Start fade-out
-    setTimeout(() => {
-        bonusTeto.style.opacity = 0;
-        setTimeout(() => {
-            bonusTeto.style.display = "none";
-            eventActive = false;
-        }, 2000);
-    }, 2000);
-}
-
-// On click, activate bonus
-bonusTeto.addEventListener("click", () => {
-    if (!eventActive) return;
-    activateBonus();
-    bonusTeto.style.display = "none";
-    eventActive = false;
-});
-
-// Bonus activation
-function activateBonus() {
-    bonusActive = true;
-    bonusMultiplier = 2;
-    document.getElementById('bonusIndicator').style.display = 'block';
-
-    setTimeout(() => {
-        bonusActive = false;
-        bonusMultiplier = 1;
-        document.getElementById('bonusIndicator').style.display = 'none';
-    }, 5000);
-}
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'minigameScore') {
+                    const bonusScore = event.data.score * 100; 
+                    score += bonusScore;
+                    updateDisplay();
+                    
+                    overlay.remove();
+                }
+            });
+        }
 
 
 
