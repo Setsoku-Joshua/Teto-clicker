@@ -212,9 +212,14 @@
     100% { transform: scale(1); }
 }
 
+@keyframes prestigeFlashAnim {
+    0% { opacity: 0; transform: scale(0.7); }
+    20% { opacity: 1; transform: scale(1.1); }
+    50% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(0.7); }
+}
 
-
-        
     </style>
 </head>
 <body>
@@ -444,6 +449,7 @@
         function prestige() {
             const gain = getPrestigeGain();
             if (gain < 1) return;
+            showPrestigeFlash();
             tetoTokens += gain;
             // Reset all progress except tokens and permanent upgrades
             score = 0;
@@ -535,7 +541,13 @@
             });
         }
 
-
+        function showPrestigeFlash() {
+            const flash = document.getElementById('prestigeFlash');
+            flash.style.display = 'flex';
+            setTimeout(() => {
+                flash.style.display = 'none';
+            }, 1000);
+        }
 
     </script>
 
@@ -550,6 +562,11 @@
     transition: opacity 2s ease-out;
     z-index: 999;
 ">
+
+<!-- Prestige Animation Overlay -->
+<div id="prestigeFlash" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.5); z-index:2000; justify-content:center; align-items:center;">
+    <img src="images/tetoclick.png" alt="Prestige Teto" style="width:180px; height:180px; filter:drop-shadow(0 0 30px #b84fa3); animation:prestigeFlashAnim 1s linear;">
+</div>
 
 </body>
 </html>
