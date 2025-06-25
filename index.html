@@ -274,114 +274,129 @@
     <script>
         let score = 0;
         let clickingPower = 1;
+        let bonusMultiplier = 1;
 
-        let breadCost = 15;
-        let baguettes = 0;
-        let MikuCost = 100;
-        let Miku = 0;
-        let PearCost = 1000;
-        let Pear = 0;
-
-        function buyBread() {
-            if (score >= breadCost) {
-                score -= breadCost;
-                baguettes++;
-                breadCost = Math.round(breadCost * 1.15);
-                updateDisplay();
+        // Upgrades array
+        const upgrades = [
+            {
+                name: 'Baguette',
+                cost: 15,
+                baseCost: 15,
+                amount: 0,
+                increment: 1,
+                costId: 'breadCost',
+                amountId: 'baguettes',
+                buy: function() { buyUpgrade(0); }
+            },
+            {
+                name: 'Miku',
+                cost: 100,
+                baseCost: 100,
+                amount: 0,
+                increment: 5,
+                costId: 'MikuCost',
+                amountId: 'Miku',
+                buy: function() { buyUpgrade(1); }
+            },
+            {
+                name: 'Pear',
+                cost: 1000,
+                baseCost: 1000,
+                amount: 0,
+                increment: 10,
+                costId: 'PearCost',
+                amountId: 'Pear',
+                buy: function() { buyUpgrade(2); }
             }
-        }
+        ];
 
-        function buyMiku() {
-            if (score >= MikuCost) {
-                score -= MikuCost;
-                Miku++;
-                MikuCost = Math.round(MikuCost * 1.15);
+        function buyUpgrade(index) {
+            const upg = upgrades[index];
+            if (score >= upg.cost) {
+                score -= upg.cost;
+                upg.amount++;
+                upg.cost = Math.round(upg.cost * 1.15);
                 updateDisplay();
-            }
-        }
-        
-         function buyPear() {
-            if (score >= PearCost) {
-                score -= PearCost;
-                Pear++;
-                PearCost = Math.round(PearCost * 1.15);
-                updateDisplay();
-                
-                // 10% chance to trigger minigame when pear is purchased
-                if (Math.random() < 100) {
+                // Pear minigame logic
+                if (index === 2 && Math.random() < 0.1) {
                     showMinigame();
                 }
             }
         }
 
+        // Attach buy functions to buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.shop-button[onclick="buyBread()"]').onclick = upgrades[0].buy;
+            document.querySelector('.shop-button[onclick="buyMiku()"]').onclick = upgrades[1].buy;
+            document.querySelector('.shop-button[onclick="buyPear()"]').onclick = upgrades[2].buy;
+        });
+
         function addToScore(amount) {
-    score += amount * bonusMultiplier;
-    updateDisplay();
-}
+            score += amount * bonusMultiplier;
+            updateDisplay();
+        }
+
+        function getTotalPerSecond() {
+            return upgrades.reduce((sum, upg) => sum + upg.amount * upg.increment, 0);
+        }
 
         function updateDisplay() {
-            document.getElementById("score").textContent = score;
-            document.getElementById("breadCost").textContent = breadCost;
-            document.getElementById("baguettes").textContent = baguettes;
-            document.getElementById("MikuCost").textContent = MikuCost;
-            document.getElementById("Miku").textContent = Miku;
-            document.getElementById("PearCost").textContent = PearCost;
-            document.getElementById("Pear").textContent = Pear;
-            document.getElementById("scorepersecond").textContent = baguettes + Miku * 5;
+            document.getElementById('score').textContent = score;
+            upgrades.forEach(upg => {
+                document.getElementById(upg.costId).textContent = upg.cost;
+                document.getElementById(upg.amountId).textContent = upg.amount;
+            });
+            document.getElementById('scorepersecond').textContent = getTotalPerSecond();
         }
 
         function animateTeto() {
-            const teto = document.getElementById("teto");
-            teto.classList.add("click-animation");
-            setTimeout(() => teto.classList.remove("click-animation"), 200);
+            const teto = document.getElementById('teto');
+            teto.classList.add('click-animation');
+            setTimeout(() => teto.classList.remove('click-animation'), 200);
         }
 
         setInterval(() => {
-    score += (baguettes + Miku * 5 + Pear * 10) * bonusMultiplier;
-    updateDisplay();
-    document.title = `${score} Tetos - Teto Clicker`;
-}, 1000);
+            score += getTotalPerSecond() * bonusMultiplier;
+            updateDisplay();
+            document.title = `${score} Tetos - Teto Clicker`;
+        }, 1000);
 
         function saveGame() {
             const gameSave = {
                 score,
                 clickingPower,
-                breadCost,
-                baguettes,
-                MikuCost,
-                Miku,
-                PearCost,
-                Pear
+                upgrades: upgrades.map(upg => ({
+                    cost: upg.cost,
+                    amount: upg.amount
+                }))
             };
-            localStorage.setItem("gameSave", JSON.stringify(gameSave));
+            localStorage.setItem('gameSave', JSON.stringify(gameSave));
         }
 
         function loadGame() {
-            const savedGame = JSON.parse(localStorage.getItem("gameSave"));
+            const savedGame = JSON.parse(localStorage.getItem('gameSave'));
             if (!savedGame) return;
-
             if (typeof savedGame.score !== 'undefined') score = savedGame.score;
             if (typeof savedGame.clickingPower !== 'undefined') clickingPower = savedGame.clickingPower;
-            if (typeof savedGame.breadCost !== 'undefined') breadCost = savedGame.breadCost;
-            if (typeof savedGame.baguettes !== 'undefined') baguettes = savedGame.baguettes;
-            if (typeof savedGame.MikuCost !== 'undefined') MikuCost = savedGame.MikuCost;
-            if (typeof savedGame.Miku !== 'undefined') Miku = savedGame.Miku;
-            if (typeof savedGame.PearCost !== 'undefined') PearCost = savedGame.PearCost;
-            if (typeof savedGame.Pear !== 'undefined') Pear = savedGame.Pear;
-
+            if (Array.isArray(savedGame.upgrades)) {
+                savedGame.upgrades.forEach((savedUpg, i) => {
+                    if (upgrades[i]) {
+                        upgrades[i].cost = savedUpg.cost;
+                        upgrades[i].amount = savedUpg.amount;
+                    }
+                });
+            }
             updateDisplay();
         }
 
         function resetGame() {
-            localStorage.removeItem("gameSave");
+            localStorage.removeItem('gameSave');
             score = 0;
             clickingPower = 1;
-            breadCost = 15;
-            baguettes = 0;
-            MikuCost = 100;
-            Miku = 0;
-            PearCost = 1000;
-            Pear = 0;
+            upgrades.forEach(upg => {
+                upg.cost = upg.baseCost;
+                upg.amount = 0;
+            });
             updateDisplay();
         }
 
@@ -389,10 +404,9 @@
             loadGame();
             // --- Bonus Teto Feature ---
             let bonusActive = false;
-            let bonusMultiplier = 1;
             let eventActive = false;
-            const bonusTeto = document.getElementById("bonusTeto");
-            const mainTeto = document.getElementById("teto");
+            const bonusTeto = document.getElementById('bonusTeto');
+            const mainTeto = document.getElementById('teto');
             let bonusIndicator = document.getElementById('bonusIndicator');
             if (!bonusIndicator) {
                 bonusIndicator = document.createElement('div');
@@ -414,16 +428,15 @@
                 const randomY = Math.random() * viewportHeight;
                 bonusTeto.style.left = `${randomX}px`;
                 bonusTeto.style.top = `${randomY}px`;
-                bonusTeto.style.display = "block";
+                bonusTeto.style.display = 'block';
                 bonusTeto.style.opacity = 1;
                 bonusTeto.style.border = '4px solid #ff0000';
                 bonusTeto.style.background = 'rgba(255,255,255,0.5)';
-                console.log('Bonus Teto appeared at', randomX, randomY);
                 setTimeout(() => {
                     if (eventActive) {
                         bonusTeto.style.opacity = 0;
                         setTimeout(() => {
-                            bonusTeto.style.display = "none";
+                            bonusTeto.style.display = 'none';
                             eventActive = false;
                         }, 500);
                     }
@@ -432,7 +445,7 @@
             bonusTeto.onclick = () => {
                 if (!eventActive) return;
                 activateBonus();
-                bonusTeto.style.display = "none";
+                bonusTeto.style.display = 'none';
                 eventActive = false;
             };
             function activateBonus() {
@@ -447,15 +460,7 @@
                     mainTeto.style.boxShadow = '';
                 }, 5000);
             }
-            window.addToScore = function(amount) {
-                score += amount * bonusMultiplier;
-                updateDisplay();
-            }
-            setInterval(() => {
-                score += (baguettes + Miku * 5 + Pear * 10) * bonusMultiplier;
-                updateDisplay();
-                document.title = `${score} Tetos - Teto Clicker`;
-            }, 1000);
+            window.addToScore = addToScore;
         };
 
         function showMinigame() {
@@ -491,7 +496,6 @@
                     const bonusScore = event.data.score * 100; 
                     score += bonusScore;
                     updateDisplay();
-                    
                     overlay.remove();
                 }
             });
