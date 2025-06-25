@@ -235,6 +235,18 @@
                 <button id="loadBtn" onclick="loadGame()">Load Game</button>
             </div>
 
+            <!-- Prestige Section -->
+            <div id="prestigeSection" style="margin-top:20px; background:#ffe4fa; border-radius:10px; padding:15px; max-width:320px; margin-left:auto; margin-right:auto;">
+                <div style="font-size:18px; font-weight:bold; color:#b84fa3;">Prestige</div>
+                <div style="margin:8px 0;">Teto Tokens: <span id="tetoTokens">0</span></div>
+                <button id="prestigeBtn" onclick="prestige()" style="background:#b84fa3; color:white; border:none; border-radius:6px; padding:8px 16px; font-size:16px; cursor:pointer;">Prestige for <span id="prestigeGain">0</span> Teto Tokens</button>
+            </div>
+
+            <!-- Permanent Upgrades -->
+            <div id="permanentUpgradesSection" style="margin-top:15px; background:#f7eaff; border-radius:10px; padding:15px; max-width:320px; margin-left:auto; margin-right:auto;">
+                <div style="font-size:16px; font-weight:bold; color:#7a3fa3;">Permanent Upgrades</div>
+                <div id="permanentUpgradesList"></div>
+            </div>
         </div>
 
         
@@ -275,6 +287,8 @@
         let score = 0;
         let clickingPower = 1;
         let bonusMultiplier = 1;
+        let tetoTokens = 0;
+        let permanentBonusMultiplier = 1;
 
         // Upgrades array
         const upgrades = [
@@ -310,6 +324,15 @@
             }
         ];
 
+        const permanentUpgrades = [
+            {
+                name: '+10% All Production',
+                cost: 10,
+                effect: 0.10, // 10% per purchase
+                purchased: 0
+            }
+        ];
+
         function buyUpgrade(index) {
             const upg = upgrades[index];
             if (score >= upg.cost) {
@@ -332,12 +355,12 @@
         });
 
         function addToScore(amount) {
-            score += amount * bonusMultiplier;
+            score += amount * bonusMultiplier * permanentBonusMultiplier;
             updateDisplay();
         }
 
         function getTotalPerSecond() {
-            return upgrades.reduce((sum, upg) => sum + upg.amount * upg.increment, 0);
+            return Math.round(upgrades.reduce((sum, upg) => sum + upg.amount * upg.increment, 0) * permanentBonusMultiplier);
         }
 
         function updateDisplay() {
@@ -347,6 +370,8 @@
                 document.getElementById(upg.amountId).textContent = upg.amount;
             });
             document.getElementById('scorepersecond').textContent = getTotalPerSecond();
+            updatePrestigeUI();
+            updatePermanentUpgradesUI();
         }
 
         function animateTeto() {
@@ -359,6 +384,7 @@
             score += getTotalPerSecond() * bonusMultiplier;
             updateDisplay();
             document.title = `${score} Tetos - Teto Clicker`;
+            updatePrestigeUI();
         }, 1000);
 
         function saveGame() {
@@ -368,7 +394,9 @@
                 upgrades: upgrades.map(upg => ({
                     cost: upg.cost,
                     amount: upg.amount
-                }))
+                })),
+                tetoTokens,
+                permanentUpgrades: permanentUpgrades.map(upg => upg.purchased)
             };
             localStorage.setItem('gameSave', JSON.stringify(gameSave));
         }
@@ -386,6 +414,13 @@
                     }
                 });
             }
+            if (typeof savedGame.tetoTokens !== 'undefined') tetoTokens = savedGame.tetoTokens;
+            if (Array.isArray(savedGame.permanentUpgrades)) {
+                savedGame.permanentUpgrades.forEach((amt, i) => {
+                    if (permanentUpgrades[i]) permanentUpgrades[i].purchased = amt;
+                });
+                updatePermanentBonus();
+            }
             updateDisplay();
         }
 
@@ -397,71 +432,70 @@
                 upg.cost = upg.baseCost;
                 upg.amount = 0;
             });
+            // Do not reset tokens or permanent upgrades
             updateDisplay();
         }
 
-        window.onload = function() {
-            loadGame();
-            // --- Bonus Teto Feature ---
-            let bonusActive = false;
-            let eventActive = false;
-            const bonusTeto = document.getElementById('bonusTeto');
-            const mainTeto = document.getElementById('teto');
-            let bonusIndicator = document.getElementById('bonusIndicator');
-            if (!bonusIndicator) {
-                bonusIndicator = document.createElement('div');
-                bonusIndicator.id = 'bonusIndicator';
-                bonusIndicator.textContent = 'BONUS ACTIVE!';
-                document.body.appendChild(bonusIndicator);
+        function getPrestigeGain() {
+            // Example: 1 token per 10,000 score, minimum 0
+            return Math.floor(score / 10000);
+        }
+
+        function prestige() {
+            const gain = getPrestigeGain();
+            if (gain < 1) return;
+            tetoTokens += gain;
+            // Reset all progress except tokens and permanent upgrades
+            score = 0;
+            clickingPower = 1;
+            upgrades.forEach(upg => {
+                upg.cost = upg.baseCost;
+                upg.amount = 0;
+            });
+            // Save permanent upgrades and tokens
+            saveGame();
+            updateDisplay();
+            updatePrestigeUI();
+            updatePermanentUpgradesUI();
+        }
+
+        function buyPermanentUpgrade(index) {
+            const upg = permanentUpgrades[index];
+            if (tetoTokens >= upg.cost) {
+                tetoTokens -= upg.cost;
+                upg.purchased++;
+                updatePermanentBonus();
+                updatePermanentUpgradesUI();
+                updatePrestigeUI();
+                saveGame();
+                updateDisplay();
             }
-            const redGlow = '0 0 30px 10px red';
-            setInterval(() => {
-                if (!eventActive && !bonusActive) {
-                    showBonusTeto();
-                }
-            }, 10000 + Math.random() * 10000);
-            function showBonusTeto() {
-                eventActive = true;
-                const viewportWidth = window.innerWidth - 100;
-                const viewportHeight = window.innerHeight - 100;
-                const randomX = Math.random() * viewportWidth;
-                const randomY = Math.random() * viewportHeight;
-                bonusTeto.style.left = `${randomX}px`;
-                bonusTeto.style.top = `${randomY}px`;
-                bonusTeto.style.display = 'block';
-                bonusTeto.style.opacity = 1;
-                bonusTeto.style.border = '4px solid #ff0000';
-                bonusTeto.style.background = 'rgba(255,255,255,0.5)';
-                setTimeout(() => {
-                    if (eventActive) {
-                        bonusTeto.style.opacity = 0;
-                        setTimeout(() => {
-                            bonusTeto.style.display = 'none';
-                            eventActive = false;
-                        }, 500);
-                    }
-                }, 2500);
-            }
-            bonusTeto.onclick = () => {
-                if (!eventActive) return;
-                activateBonus();
-                bonusTeto.style.display = 'none';
-                eventActive = false;
-            };
-            function activateBonus() {
-                bonusActive = true;
-                bonusMultiplier = 2;
-                bonusIndicator.style.display = 'block';
-                mainTeto.style.boxShadow = redGlow;
-                setTimeout(() => {
-                    bonusActive = false;
-                    bonusMultiplier = 1;
-                    bonusIndicator.style.display = 'none';
-                    mainTeto.style.boxShadow = '';
-                }, 5000);
-            }
-            window.addToScore = addToScore;
-        };
+        }
+
+        function updatePermanentBonus() {
+            // Each purchase increases by 10%
+            permanentBonusMultiplier = 1 + permanentUpgrades.reduce((sum, upg) => sum + upg.effect * upg.purchased, 0);
+        }
+
+        function updatePermanentUpgradesUI() {
+            const list = document.getElementById('permanentUpgradesList');
+            list.innerHTML = '';
+            permanentUpgrades.forEach((upg, i) => {
+                const div = document.createElement('div');
+                div.style.margin = '8px 0';
+                div.innerHTML = `
+                    <span>${upg.name} (Owned: ${upg.purchased})</span><br>
+                    <button onclick="buyPermanentUpgrade(${i})" style="background:#7a3fa3; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:14px; cursor:pointer; margin-top:4px;" ${tetoTokens < upg.cost ? 'disabled' : ''}>Buy for ${upg.cost} Teto Tokens</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updatePrestigeUI() {
+            document.getElementById('tetoTokens').textContent = tetoTokens;
+            document.getElementById('prestigeGain').textContent = getPrestigeGain();
+            document.getElementById('prestigeBtn').disabled = getPrestigeGain() < 1;
+        }
 
         function showMinigame() {
             const overlay = document.createElement('div');
