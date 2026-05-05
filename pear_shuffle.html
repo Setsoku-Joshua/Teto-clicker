@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spooks | Pear Shuffle</title>
+    <style>
+        :root {
+            --bg-dark: #1a0008;       
+            --text-main: #fff5f6;      
+            --text-muted: #ffb3bb;     
+            --accent-color: #e8334a; 
+            --highlight-color: #ff6b7a; 
+            --glass-bg: rgba(42, 16, 21, 0.85); 
+            --glass-border: rgba(255, 107, 122, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', 'Segoe UI', Roboto, Helvetica, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #bg {
+            position: fixed; 
+            inset: 0; 
+            z-index: 0;
+            background: url('images/tetobg.jpg') center/cover no-repeat;
+            filter: blur(4px) brightness(0.4);
+            transform: scale(1.05);
+        }
+
+        .ui-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header { text-align: center; margin-bottom: 1rem; }
+        .header h1 {
+            color: #5cf68b;
+            font-size: 2.2rem;
+            text-shadow: 0 0 10px rgba(92, 246, 139, 0.5);
+            margin-bottom: 0.5rem;
+            font-family: 'Fredoka One', sans-serif; 
+        }
+
+        .status-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-main);
+            background: var(--glass-bg);
+            padding: 0.5rem 2rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+
+        .game-container {
+            position: relative;
+            width: 450px;
+            height: 400px;
+            margin-top: 20px;
+            background: rgba(26, 0, 8, 0.6); 
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(92, 246, 139, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .pear {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            
+            /* HUGE INVISIBLE HITBOX FIX */
+            padding: 30px; 
+            margin: -30px; 
+            box-sizing: content-box; 
+
+            cursor: default;
+            transition: left 0.4s ease-in-out, top 0.4s ease-in-out, transform 0.2s, filter 0.2s;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            z-index: 5;
+            -webkit-user-drag: none;
+        }
+
+        .target-highlight {
+            filter: drop-shadow(0 0 25px #5cf68b) brightness(1.2) !important;
+            z-index: 10;
+        }
+
+        .choosing .pear:hover {
+            transform: scale(1.05); 
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
+            z-index: 15;
+            cursor: pointer;
+        }
+
+        /* --- UI OVERLAYS --- */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 0, 8, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+            padding: 1rem; 
+        }
+
+        .overlay h2 {
+            font-size: 1.8rem; 
+            margin-bottom: 0.5rem;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn {
+            background-color: #2e8b57;
+            color: white;
+            border: 1px solid #4caf50;
+            padding: 0.8rem 1.5rem; 
+            font-size: 1.1rem; 
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            box-shadow: 0 4px 0 #1b5e20; 
+        }
+        .btn:hover {
+            background-color: #4caf50;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(76, 175, 80, 0.4);
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1b5e20;
+        }
+
+        .bonus-text { 
+            color: #5cf68b; 
+            font-size: 1.4rem; 
+            font-weight: 900; 
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .controls-hint {
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        kbd {
+            background: rgba(255, 179, 187, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 179, 187, 0.3);
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg"></div>
+
+    <div class="ui-wrapper">
+        <div class="header">
+            <h1>Pear Shuffle</h1>
+            <div class="status-text" id="statusText">Watch carefully...</div>
+        </div>
+
+        <div class="game-container" id="gameContainer">
+            <div class="overlay hidden" id="resultScreen">
+                <h2 id="resultTitle">You found it!</h2>
+                <div class="bonus-text" id="bonusText">+0 Tetos Earned!</div>
+                <button class="btn" onclick="returnToProfile()">Claim Tetos</button>
+            </div>
+        </div>
+
+        <div class="controls-hint" id="controlsHint">Press <kbd>R</kbd> to restart.</div>
+    </div>
+
+    <script>
+        // --- AUDIO SETUP ---
+        let sfxVolumeScale = 1.0;
+        let resetKey = 'r';
+
+        try {
+            const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
+            if (savedSettings) {
+                sfxVolumeScale = savedSettings.sfxVolume;
+                resetKey = savedSettings.resetKey || 'r';
+            }
+        } catch(e) {}
+
+        document.getElementById('controlsHint').innerHTML = `Press <kbd>${resetKey}</kbd> to restart.`;
+
+        const sfxTap = new Audio('sounds/tap.mp3');         
+        const sfxHit = new Audio('sounds/hit.mp3');         
+        const sfxMiss = new Audio('sounds/miss.mp3');       
+        const sfxComplete = new Audio('sounds/complete.mp3'); 
+
+        sfxTap.volume = 0.3;
+        sfxHit.volume = 0.6;
+        sfxMiss.volume = 0.5;
+        sfxComplete.volume = 0.8;
+
+        function playSound(audioObj) {
+            let clone = audioObj.cloneNode();
+            clone.volume = audioObj.volume * sfxVolumeScale;
+            clone.play().catch(e => console.warn("Audio play failed:", e));
+        }
+
+        // --- GAME LOGIC ---
+        const container = document.getElementById('gameContainer');
+        const statusText = document.getElementById('statusText');
+        const resultScreen = document.getElementById('resultScreen');
+        const resultTitle = document.getElementById('resultTitle');
+        const bonusText = document.getElementById('bonusText');
+
+        const slotPositions = [
+            {x: 60, y: 70},   {x: 185, y: 70},  {x: 310, y: 70},
+            {x: 60, y: 220},  {x: 185, y: 220}, {x: 310, y: 220}
+        ];
+
+        let pears = [];
+        let targetIndex = 0;
+        let isChoosing = false;
+        let isShuffling = false;
+        let isWaitingForRetry = false;
+        let currentWager = 0;
+        let currentTetosEarned = 0;
+
+        function initPears() {
+            container.querySelectorAll('.pear').forEach(p => p.remove());
+            pears = [];
+            
+            for (let i = 0; i < 6; i++) {
+                let pear = document.createElement('img');
+                pear.src = 'images/pear.png';
+                pear.className = 'pear';
+                pear.draggable = false;
+                
+                pear.style.left = `${slotPositions[i].x}px`;
+                pear.style.top = `${slotPositions[i].y}px`;
+                pear.dataset.currentSlot = i;
+                
+                pear.onclick = () => pickPear(i);
+                container.appendChild(pear);
+                pears.push(pear);
+            }
+        }
+
+        function startGame() {
+            resultScreen.classList.add('hidden');
+            container.classList.remove('choosing');
+            isChoosing = false;
+            isShuffling = true;
+            statusText.innerText = "Watch carefully...";
+            statusText.style.color = "var(--text-main)";
+
+            initPears();
+
+            targetIndex = Math.floor(Math.random() * 6);
+            
+            setTimeout(() => {
+                pears[targetIndex].classList.add('target-highlight');
+                playSound(sfxHit);
+            }, 500);
+
+            setTimeout(() => {
+                pears[targetIndex].classList.remove('target-highlight');
+                shufflePears(12);
+            }, 2500);
+        }
+
+        function shufflePears(iterationsLeft) {
+            if (iterationsLeft <= 0) {
+                isShuffling = false;
+                isChoosing = true;
+                container.classList.add('choosing');
+                statusText.innerText = "Find the Pear!";
+                statusText.style.color = "#5cf68b";
+                playSound(sfxTap);
+                return;
+            }
+
+            let newSlots = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5);
+            
+            pears.forEach((pear, i) => {
+                let assignedSlot = newSlots[i];
+                pear.dataset.currentSlot = assignedSlot;
+                
+                pear.style.left = `${slotPositions[assignedSlot].x}px`;
+                pear.style.top = `${slotPositions[assignedSlot].y}px`;
+            });
+
+            playSound(sfxTap);
+            setTimeout(() => shufflePears(iterationsLeft - 1), 450); 
+        }
+
+        function pickPear(index) {
+            if (!isChoosing) return;
+            isChoosing = false;
+            container.classList.remove('choosing');
+            
+            // Read wager context AND pearBoost
+            let context = { wager: 0, pearBoost: 0 };
+            try {
+                let saved = JSON.parse(localStorage.getItem('minigameContext'));
+                if (saved) context = saved;
+            } catch(e) {}
+            
+            currentWager = context.wager;
+            let multiplier = 3 + (context.pearBoost || 0);
+
+            if (index === targetIndex) {
+                playSound(sfxComplete);
+                pears[index].classList.add('target-highlight');
+                statusText.innerText = "Correct!";
+                statusText.style.color = "#5cf68b";
+                
+                resultTitle.innerText = "You found it!";
+                resultTitle.style.color = "#5cf68b";
+                
+                currentTetosEarned = Math.floor(currentWager * multiplier);
+                bonusText.innerText = `+${currentTetosEarned} Tetos Earned!`;
+                bonusText.style.color = "#5cf68b";
+            } else {
+                playSound(sfxMiss);
+                pears[index].style.filter = "grayscale(1) opacity(0.5)"; 
+                pears[targetIndex].classList.add('target-highlight'); 
+                
+                statusText.innerText = "Wrong!";
+                statusText.style.color = "var(--accent-color)";
+
+                resultTitle.innerText = "Oof, wrong pear.";
+                resultTitle.style.color = "var(--accent-color)";
+                
+                currentTetosEarned = 0;
+                bonusText.innerText = `Wager Lost...`;
+                bonusText.style.color = "var(--text-muted)";
+            }
+
+            setTimeout(() => {
+                resultScreen.classList.remove('hidden');
+            }, 1500); 
+        }
+
+        function returnToProfile() {
+            window.parent.postMessage({ type: 'minigameScore', tetosEarned: currentTetosEarned }, '*');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            let key = e.key.toLowerCase();
+
+            if (key === resetKey) {
+                if (isWaitingForRetry) return;
+                playSound(sfxTap);
+                isWaitingForRetry = true;
+                window.parent.postMessage({ type: 'requestRetry', game: 'pear' }, '*');
+            }
+        });
+
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'retryApproved') {
+                isWaitingForRetry = false;
+                let context = { wager: e.data.wager, pearBoost: e.data.pearBoost || 0 };
+                localStorage.setItem('minigameContext', JSON.stringify(context));
+                startGame();
+            } else if (e.data?.type === 'retryDenied') {
+                isWaitingForRetry = false;
+                statusText.innerText = "Not enough Tetos!";
+                statusText.style.color = "var(--accent-color)";
+                playSound(sfxMiss);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.focus();
+            document.body.focus();
+            startGame();
+        });
+    </script>
+</body>
+</html>
