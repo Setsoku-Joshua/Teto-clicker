@@ -74,11 +74,21 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
-        .stat-value { color: var(--highlight-color); }
+        .stat-value { color: var(--highlight-color); display: inline-block; }
 
+        /* VSRG Combo Pulse Animation */
+        @keyframes comboPulse {
+            0% { transform: scale(1.4); color: #fff; }
+            100% { transform: scale(1); color: var(--highlight-color); }
+        }
+        .combo-bump {
+            animation: comboPulse 0.15s ease-out;
+        }
+
+        /* Widened container for 4 lanes */
         .game-container {
             position: relative;
-            width: 300px;
+            width: 450px;
             height: 65vh;
             background: rgba(26, 0, 8, 0.8); 
             border: 2px solid var(--glass-border);
@@ -109,22 +119,16 @@
             border: 2px solid rgba(255, 179, 187, 0.3); 
             border-radius: 8px;
             background: rgba(255,255,255,0.03);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 5;
             cursor: pointer;
-        }
-
-        .judgement-indicator:hover {
-            transform: scale(1.05);
-            border-color: rgba(255, 179, 187, 0.6);
-            background: rgba(255,255,255,0.06);
         }
 
         .judgement-indicator.active {
             border-color: var(--highlight-color);
             background: rgba(232, 51, 74, 0.25);
             box-shadow: 0 0 20px var(--highlight-color);
-            transform: scale(0.98);
+            transform: scale(0.95) translateY(2px);
         }
 
         .judgement-baguette {
@@ -145,6 +149,7 @@
             color: var(--text-muted);
             opacity: 0.8;
             z-index: 6;
+            text-transform: uppercase;
         }
 
         .note {
@@ -154,32 +159,33 @@
             will-change: transform;
             z-index: 3;
             text-shadow: 0 5px 10px rgba(0,0,0,0.5);
-            animation: notePulse 1s infinite alternate;
+            animation: notePulse 0.5s infinite alternate;
         }
         @keyframes notePulse {
             from { filter: drop-shadow(0 0 5px rgba(255, 107, 122, 0.5)); }
-            to { filter: drop-shadow(0 0 10px rgba(255, 107, 122, 1)); }
+            to { filter: drop-shadow(0 0 15px rgba(255, 107, 122, 1)) brightness(1.2); }
         }
 
+        /* ── CENTRAL GLOBAL JUDGMENT TEXT ── */
         .judgment-text {
             position: absolute;
             top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.5rem;
+            font-size: 2.2rem;
             font-weight: 900;
             opacity: 0;
             pointer-events: none;
             z-index: 10;
         }
 
-        .judgment-text.show { animation: popFade 0.5s ease-out forwards; }
+        .judgment-text.show { animation: popFade 0.4s ease-out forwards; }
         @keyframes popFade {
-            0% { opacity: 1; transform: translate(-50%, -30%) scale(1.2); }
+            0% { opacity: 1; transform: translate(-50%, -20%) scale(1.3); }
             100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
         }
 
-        .judg-perfect { color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+        .judg-perfect { color: #00ffcc; text-shadow: 0 0 15px #00ffcc; }
         .judg-great { color: #5cf68b; text-shadow: 0 0 10px #5cf68b; }
         .judg-miss { color: var(--accent-color); text-shadow: 0 0 10px var(--accent-color); }
 
@@ -253,6 +259,7 @@
             border-radius: 4px;
             border: 1px solid rgba(255, 179, 187, 0.3);
             color: var(--text-main);
+            text-transform: uppercase;
         }
 
         .song-info-text {
@@ -284,11 +291,7 @@
 
         <div class="game-container" id="gameContainer">
             
-            <div class="overlay" id="startScreen">
-                <h2>Catch the Baguettes! 🥖</h2>
-                <p style="margin-top: 0.2rem; font-size: 0.9rem; color: var(--text-muted);">Hit the notes when they reach the indicator.</p>
-                <button class="btn" id="startBtn">Play Now</button>
-            </div>
+            <div class="judgment-text" id="globalJudgment"></div>
 
             <div class="overlay hidden" id="resultScreen">
                 <h2>Song Cleared!</h2>
@@ -300,51 +303,78 @@
                         Perfect: <span id="countP">0</span> | Great: <span id="countG">0</span> | Miss: <span id="countM">0</span>
                     </div>
                 </div>
-                <div class="bonus-text" id="bonusText">+0 Profile XP Earned!</div>
+                <div class="bonus-text" id="bonusText">+0 Tetos Earned!</div>
                 <button class="btn" onclick="returnToProfile()">Claim Tetos</button>
             </div>
 
             <div class="lane" id="lane0">
                 <a class="judgement-indicator" id="indicator0">
                     <span class="judgement-baguette">🥖</span>
-                    <span class="key-text">A</span>
+                    <span class="key-text" id="keyText0">D</span>
                 </a>
-                <div class="judgment-text" id="judg0"></div>
             </div>
             <div class="lane" id="lane1">
                 <a class="judgement-indicator" id="indicator1">
                     <span class="judgement-baguette">🥖</span>
-                    <span class="key-text">D</span>
+                    <span class="key-text" id="keyText1">F</span>
                 </a>
-                <div class="judgment-text" id="judg1"></div>
+            </div>
+            <div class="lane" id="lane2">
+                <a class="judgement-indicator" id="indicator2">
+                    <span class="judgement-baguette">🥖</span>
+                    <span class="key-text" id="keyText2">J</span>
+                </a>
+            </div>
+            <div class="lane" id="lane3">
+                <a class="judgement-indicator" id="indicator3">
+                    <span class="judgement-baguette">🥖</span>
+                    <span class="key-text" id="keyText3">K</span>
+                </a>
             </div>
         </div>
 
-        <div class="controls-hint">Use <kbd>A</kbd> and <kbd>D</kbd> keys to play.</div>
+        <div class="controls-hint" id="controlsHint">Use <kbd>D</kbd>, <kbd>F</kbd>, <kbd>J</kbd>, and <kbd>K</kbd> to play. Press <kbd>R</kbd> to restart.</div>
     </div>
 
     <script>
-        // --- SETTINGS INTEGRATION ---
+        // --- SETTINGS INTEGRATION & VSRG DIFFICULTY TUNING ---
         let sfxVolumeScale = 1.0;
         let FALL_DURATION = 1500; 
-        let HIT_WINDOW_PERFECT = 80; 
-        let HIT_WINDOW_GREAT = 150; 
-        let NOTE_DENSITY = 0.7; // Higher number = more dense notes
+        
+        let difficultyMode = 'normal';
+        let activeKeys = ['d', 'f', 'j', 'k'];
+        let resetKey = 'r';
+
+        // Strict VSRG Hit Windows (Constant across difficulties)
+        const HIT_WINDOW_PERFECT = 60; 
+        const HIT_WINDOW_GREAT = 120; 
 
         try {
             const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
             if (savedSettings) {
                 sfxVolumeScale = savedSettings.sfxVolume;
-                FALL_DURATION = savedSettings.speed;
                 
-                if (savedSettings.difficulty === 'easy') {
-                    HIT_WINDOW_PERFECT = 120; HIT_WINDOW_GREAT = 200; NOTE_DENSITY = 0.5;
-                } else if (savedSettings.difficulty === 'hard') {
-                    HIT_WINDOW_PERFECT = 50; HIT_WINDOW_GREAT = 100; NOTE_DENSITY = 0.85;
+                // OSU!MANIA SCROLL SPEED LOGIC
+                let osuSpeed = savedSettings.speed || 15;
+                if (osuSpeed > 30) osuSpeed = 15; 
+                FALL_DURATION = 15000 / (osuSpeed + 5); 
+
+                difficultyMode = savedSettings.difficulty || 'normal';
+
+                if(savedSettings.keys && savedSettings.keys.length === 4) {
+                    activeKeys = savedSettings.keys;
                 }
+                resetKey = savedSettings.resetKey || 'r';
             }
         } catch(e) { console.warn("Could not load minigame settings:", e); }
 
+
+        // Update UI with the active keys
+        document.getElementById('keyText0').innerText = activeKeys[0];
+        document.getElementById('keyText1').innerText = activeKeys[1];
+        document.getElementById('keyText2').innerText = activeKeys[2];
+        document.getElementById('keyText3').innerText = activeKeys[3];
+        document.getElementById('controlsHint').innerHTML = `Use <kbd>${activeKeys[0]}</kbd>, <kbd>${activeKeys[1]}</kbd>, <kbd>${activeKeys[2]}</kbd>, and <kbd>${activeKeys[3]}</kbd> to play. Press <kbd>${resetKey}</kbd> to restart.`;
 
         // --- AUDIO SETUP ---
         const sfxTap = new Audio('sounds/tap.mp3');         
@@ -359,26 +389,30 @@
 
         function playSound(audioObj) {
             let clone = audioObj.cloneNode();
-            clone.volume = audioObj.volume * sfxVolumeScale; // Apply the Settings multiplier
+            clone.volume = audioObj.volume * sfxVolumeScale;
             clone.play().catch(e => console.warn("Audio play failed:", e));
         }
         // -------------------
 
-        const startScreen = document.getElementById('startScreen');
         const resultScreen = document.getElementById('resultScreen');
-        const startBtn = document.getElementById('startBtn');
-        const lanes = [document.getElementById('lane0'), document.getElementById('lane1')];
-        const indicators = [document.getElementById('indicator0'), document.getElementById('indicator1')];
-        const judgments = [document.getElementById('judg0'), document.getElementById('judg1')];
+        
+        const lanes = [document.getElementById('lane0'), document.getElementById('lane1'), document.getElementById('lane2'), document.getElementById('lane3')];
+        const indicators = [document.getElementById('indicator0'), document.getElementById('indicator1'), document.getElementById('indicator2'), document.getElementById('indicator3')];
+        
+        const globalJudgment = document.getElementById('globalJudgment');
         
         const scoreDisp = document.getElementById('scoreDisplay');
         const comboDisp = document.getElementById('comboDisplay');
         const accDisp = document.getElementById('accDisplay');
         
         let isPlaying = false;
+        let isWaitingForRetry = false;
         let startTime;
         let animationFrameId;
         
+        let trackHeight = 0;
+        let hitY = 0;
+
         let score = 0;
         let combo = 0;
         let maxCombo = 0;
@@ -386,31 +420,87 @@
         let hitCounts = { perfect: 0, great: 0, miss: 0 };
         
         let chart = []; 
+        let activeNotes = [];
+        let nextNoteIndex = 0;
+
         let currentBaseBonus = 0;
 
         function generateChart() {
             let notes = [];
             let time = 2000; 
+            let idCounter = 0;
             
-            for(let i = 0; i < 50; i++) {
-                notes.push({
-                    id: i,
-                    time: time,
-                    lane: Math.floor(Math.random() * 2),
-                    spawned: false,
-                    hit: false,
-                    missed: false,
-                    el: null
-                });
-                let gap = (Math.random() > NOTE_DENSITY) ? 250 : 500; // Applied settings density
-                time += gap;
+            // MUSICAL SEQUENCER
+            let BPM = (difficultyMode === 'hard') ? 170 : (difficultyMode === 'normal' ? 160 : 150);
+            let msPerBeat = 60000 / BPM;
+            let prevLane = -1;
+
+            let totalBeats = (difficultyMode === 'hard') ? 64 : 32; 
+            let subDivisions = (difficultyMode === 'hard') ? 4 : (difficultyMode === 'normal' ? 2 : 1); 
+
+            for (let b = 0; b < totalBeats; b++) {
+                for (let s = 0; s < subDivisions; s++) {
+                    
+                    let isJump = false;
+                    if (difficultyMode === 'hard' && s === 0) isJump = true; 
+                    else if (difficultyMode === 'normal' && b % 2 === 0 && s === 0) isJump = true; 
+
+                    let l1;
+                    do { l1 = Math.floor(Math.random() * 4); } while (l1 === prevLane);
+
+                    // OPTIMIZATION: Pre-calculate spawn and miss times so gameLoop does no math!
+                    notes.push({ 
+                        id: idCounter++, 
+                        time: time, 
+                        lane: l1, 
+                        spawnTime: time - FALL_DURATION,
+                        missTime: time + HIT_WINDOW_GREAT,
+                        hit: false, 
+                        missed: false, 
+                        el: null 
+                    });
+                    
+                    if (isJump) {
+                        let l2;
+                        do { l2 = Math.floor(Math.random() * 4); } while (l2 === l1 || (subDivisions > 1 && l2 === prevLane));
+                        notes.push({ 
+                            id: idCounter++, 
+                            time: time, 
+                            lane: l2, 
+                            spawnTime: time - FALL_DURATION,
+                            missTime: time + HIT_WINDOW_GREAT,
+                            hit: false, 
+                            missed: false, 
+                            el: null 
+                        });
+                    }
+                    
+                    prevLane = l1; 
+                    time += msPerBeat / subDivisions;
+                }
             }
             return notes;
         }
 
         function startGame() {
-            startScreen.classList.add('hidden');
+            cancelAnimationFrame(animationFrameId);
+            document.querySelectorAll('.note').forEach(n => n.remove());
+            
+            // Clear prompts
+            globalJudgment.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
+            globalJudgment.style.color = "";
+            globalJudgment.style.textShadow = "";
+            
+            resultScreen.classList.add('hidden');
+
+            // OPTIMIZATION: Cache DOM elements once at start
+            trackHeight = lanes[0].clientHeight;
+            hitY = trackHeight - 75;
+
             chart = generateChart();
+            activeNotes = [];
+            nextNoteIndex = 0;
+
             score = 0; combo = 0; maxCombo = 0; totalHits = 0;
             hitCounts = { perfect: 0, great: 0, miss: 0 };
             updateStats();
@@ -424,25 +514,31 @@
             if (!isPlaying) return;
 
             let elapsedTime = currentTime - startTime;
-            let trackHeight = lanes[0].clientHeight;
-            let hitY = trackHeight - 75; 
             
-            for (let i = 0; i < chart.length; i++) {
-                let note = chart[i];
-                if (note.hit || note.missed) continue;
+            // Push active notes into queue
+            while(nextNoteIndex < chart.length && elapsedTime >= chart[nextNoteIndex].spawnTime) {
+                let note = chart[nextNoteIndex];
+                spawnNoteElement(note);
+                activeNotes.push(note);
+                nextNoteIndex++;
+            }
 
-                if (!note.spawned && elapsedTime >= note.time - FALL_DURATION) {
-                    spawnNoteElement(note);
+            // OPTIMIZATION: Only loop backwards over visible notes on the screen
+            for (let i = activeNotes.length - 1; i >= 0; i--) {
+                let note = activeNotes[i];
+
+                if (note.hit || note.missed) {
+                    activeNotes.splice(i, 1);
+                    continue;
                 }
 
-                if (note.spawned && note.el) {
-                    let progress = (elapsedTime - (note.time - FALL_DURATION)) / FALL_DURATION;
-                    let currentY = progress * hitY;
-                    note.el.style.transform = `translateY(${currentY + 26}px)`; 
+                let progress = (elapsedTime - note.spawnTime) / FALL_DURATION;
+                let currentY = progress * hitY;
+                note.el.style.transform = `translateY(${currentY + 26}px)`; 
 
-                    if (elapsedTime > note.time + HIT_WINDOW_GREAT) {
-                        registerHit('miss', note);
-                    }
+                if (elapsedTime > note.missTime) {
+                    registerHit('miss', note);
+                    activeNotes.splice(i, 1);
                 }
             }
 
@@ -468,10 +564,21 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            if (!isPlaying || e.repeat) return;
-            let laneIndex = -1;
-            if (e.key.toLowerCase() === 'a') laneIndex = 0;
-            if (e.key.toLowerCase() === 'd') laneIndex = 1;
+            if (e.repeat) return;
+            let key = e.key.toLowerCase();
+
+            // Restart Hotkey Listener
+            if (key === resetKey) {
+                if (isWaitingForRetry) return;
+                playSound(sfxTap);
+                isWaitingForRetry = true;
+                window.parent.postMessage({ type: 'requestRetry' }, '*');
+                return;
+            }
+
+            if (!isPlaying) return;
+
+            let laneIndex = activeKeys.indexOf(key);
             
             if (laneIndex !== -1) {
                 playSound(sfxTap); 
@@ -480,14 +587,43 @@
         });
 
         document.addEventListener('keyup', (e) => {
-            let laneIndex = -1;
-            if (e.key.toLowerCase() === 'a') laneIndex = 0;
-            if (e.key.toLowerCase() === 'd') laneIndex = 1;
+            let laneIndex = activeKeys.indexOf(e.key.toLowerCase());
             if (laneIndex !== -1) indicators[laneIndex].classList.remove('active');
         });
 
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'retryApproved') {
+                isWaitingForRetry = false;
+                let context = { wager: e.data.wager, concertBoost: e.data.concertBoost || 0 };
+                localStorage.setItem('minigameContext', JSON.stringify(context));
+                startGame();
+            } else if (e.data?.type === 'retryDenied') {
+                isWaitingForRetry = false;
+                
+                globalJudgment.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
+                void globalJudgment.offsetWidth; 
+                globalJudgment.innerText = "NOT ENOUGH TETOS!";
+                globalJudgment.style.color = "var(--accent-color)";
+                globalJudgment.style.textShadow = "0 0 15px var(--accent-color)";
+                globalJudgment.classList.add('show');
+                
+                setTimeout(() => {
+                    globalJudgment.style.color = "";
+                    globalJudgment.style.textShadow = "";
+                }, 1500);
+            }
+        });
+
         indicators.forEach((indicator, index) => {
-            indicator.addEventListener('click', (e) => {
+            indicator.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (!isPlaying) return;
+                playSound(sfxTap); 
+                pressKey(index);
+                indicator.classList.add('active');
+                setTimeout(() => indicator.classList.remove('active'), 100);
+            });
+            indicator.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!isPlaying) return;
                 playSound(sfxTap); 
@@ -500,7 +636,9 @@
         function pressKey(laneIndex) {
             indicators[laneIndex].classList.add('active');
             let currentTime = performance.now() - startTime;
-            let noteToHit = chart.find(n => n.lane === laneIndex && !n.hit && !n.missed && n.spawned);
+            
+            // OPTIMIZATION: Only search the tiny active notes array instead of the massive chart
+            let noteToHit = activeNotes.find(n => n.lane === laneIndex && !n.hit && !n.missed && n.spawned);
             
             if (noteToHit) {
                 let timeDiff = Math.abs(currentTime - noteToHit.time);
@@ -530,21 +668,27 @@
             }
 
             if (combo > maxCombo) maxCombo = combo;
-            showJudgmentText(note.lane, judgment);
+            showJudgmentText(judgment);
             updateStats();
         }
 
-        function showJudgmentText(laneIndex, text) {
-            let judgEl = judgments[laneIndex];
-            judgEl.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
-            void judgEl.offsetWidth; 
-            judgEl.innerText = text.toUpperCase();
-            judgEl.classList.add(`judg-${text}`, 'show');
+        function showJudgmentText(text) {
+            globalJudgment.style.color = ""; 
+            globalJudgment.style.textShadow = "";
+            globalJudgment.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
+            void globalJudgment.offsetWidth; 
+            globalJudgment.innerText = text.toUpperCase();
+            globalJudgment.classList.add(`judg-${text}`, 'show');
         }
 
         function updateStats() {
             scoreDisp.innerText = score;
             comboDisp.innerText = combo;
+
+            comboDisp.classList.remove('combo-bump');
+            void comboDisp.offsetWidth; 
+            if (combo > 0) comboDisp.classList.add('combo-bump');
+
             if (totalHits === 0) accDisp.innerText = "100%";
             else {
                 let acc = (((hitCounts.perfect * 300) + (hitCounts.great * 100)) / (totalHits * 300)) * 100;
@@ -559,12 +703,18 @@
 
             playSound(sfxComplete);
 
-            let finalAccNum = parseFloat(accDisp.innerText);
-            currentBaseBonus = Math.floor(score / 100) + (maxCombo * 2);
-            if (finalAccNum > 95) currentBaseBonus += 50;
-            else if (finalAccNum > 80) currentBaseBonus += 20;
+            let finalAccNum = parseFloat(accDisp.innerText) || 0;
+            
+            let context = { wager: 0, concertBoost: 0 };
+            try {
+                let saved = JSON.parse(localStorage.getItem('minigameContext'));
+                if (saved) context = saved;
+            } catch(e) {}
 
-            let actualTetosEarned = currentBaseBonus * 10;
+            let baseRatio = (difficultyMode === 'hard') ? 2.5 : 1.5;
+            let maxRatio = baseRatio + (context.concertBoost || 0);
+            let actualTetosEarned = Math.floor(context.wager * maxRatio * (finalAccNum / 100));
+
             document.getElementById('finalScore').innerText = score;
             document.getElementById('finalCombo').innerText = maxCombo;
             document.getElementById('finalAcc').innerText = accDisp.innerText;
@@ -573,14 +723,21 @@
             document.getElementById('countM').innerText = hitCounts.miss;
             document.getElementById('bonusText').innerText = `+${actualTetosEarned} Tetos Earned!`;
 
+            currentBaseBonus = actualTetosEarned; 
+
             resultScreen.classList.remove('hidden');
         }
 
         function returnToProfile() {
-            window.parent.postMessage({ type: 'minigameScore', score: currentBaseBonus }, '*');
+            window.parent.postMessage({ type: 'minigameScore', score: score, tetosEarned: currentBaseBonus }, '*');
         }
 
-        startBtn.addEventListener('click', startGame);
+        // Steals focus so keyboard bindings work instantly, then starts the game!
+        window.addEventListener('DOMContentLoaded', () => {
+            window.focus();
+            document.body.focus();
+            startGame();
+        });
     </script>
 </body>
 </html>
