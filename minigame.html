@@ -1,277 +1,586 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Teto Pear Catcher</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spooks | Baguette Mania</title>
     <style>
-        body {
+        /* --- TETO COLOR PALETTE --- */
+        :root {
+            --bg-dark: #1a0008;       
+            --text-main: #fff5f6;      
+            --text-muted: #ffb3bb;     
+            --accent-color: #e8334a; 
+            --highlight-color: #ff6b7a; 
+            --glass-bg: rgba(42, 16, 21, 0.85); 
+            --glass-border: rgba(255, 107, 122, 0.3);
+        }
+
+        * {
             margin: 0;
-            overflow: hidden;
-            background-color: #f0f8ff;
-            font-family: Arial, sans-serif;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', 'Segoe UI', Roboto, Helvetica, sans-serif;
+            user-select: none;
         }
-        
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-        
-        #player {
-            position: absolute;
-            width: 120px; 
-            height: 120px; 
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-        
-        .pear {
-            position: absolute;
-            width: 100px; 
-            height: 100px; 
-            z-index: 5;
-        }
-        
-        #scoreDisplay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            color: #333;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 10px 20px;
-            border-radius: 10px;
-            z-index: 20;
-        }
-        
-        #startScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 30;
-            color: white;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
         }
-        
-        #startButton {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 20px;
-            background-color: #ff6b6b;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+
+        #bg {
+            position: fixed; 
+            inset: 0; 
+            z-index: 0;
+            background: url('images/tetobg.jpg') center/cover no-repeat;
+            filter: blur(4px) brightness(0.4);
+            transform: scale(1.05);
         }
-        
-        #startButton:hover {
-            background-color: #ff5252;
-        }
-        
-        #gameOverScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
+
+        .ui-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 30;
-            color: white;
+            width: 100%;
         }
-        
-        #restartButton {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 20px;
-            background-color: #4ecdc4;
-            color: white;
-            border: none;
-            border-radius: 5px;
+
+        .header { text-align: center; margin-bottom: 1rem; }
+        .header h1 {
+            color: var(--highlight-color);
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(255, 107, 122, 0.5);
+            margin-bottom: 0.5rem;
+            font-family: 'Fredoka One', sans-serif; 
+        }
+
+        .stats-panel {
+            display: flex;
+            gap: 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: var(--glass-bg);
+            padding: 0.5rem 1.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .stat-value { color: var(--highlight-color); }
+
+        .game-container {
+            position: relative;
+            width: 300px;
+            height: 65vh;
+            background: rgba(26, 0, 8, 0.8); 
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(232, 51, 74, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .lane {
+            flex: 1;
+            position: relative;
+            border-right: 1px solid rgba(255, 179, 187, 0.08); 
+            display: flex;
+            justify-content: center;
+        }
+        .lane:last-child { border-right: none; }
+
+        .judgement-indicator {
+            position: absolute;
+            bottom: 45px;
+            width: 80%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 179, 187, 0.3); 
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 5;
             cursor: pointer;
         }
-        
-        #restartButton:hover {
-            background-color: #3dbeb4;
+
+        .judgement-indicator:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 179, 187, 0.6);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .judgement-indicator.active {
+            border-color: var(--highlight-color);
+            background: rgba(232, 51, 74, 0.25);
+            box-shadow: 0 0 20px var(--highlight-color);
+            transform: scale(0.98);
+        }
+
+        .judgement-baguette {
+            font-size: 2.5rem;
+            color: var(--text-muted);
+            filter: grayscale(1) opacity(0.7);
+            line-height: 1;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .key-text {
+            position: absolute;
+            bottom: -15px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            opacity: 0.8;
+            z-index: 6;
+        }
+
+        .note {
+            position: absolute;
+            top: -50px;
+            font-size: 3rem;
+            will-change: transform;
+            z-index: 3;
+            text-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            animation: notePulse 1s infinite alternate;
+        }
+        @keyframes notePulse {
+            from { filter: drop-shadow(0 0 5px rgba(255, 107, 122, 0.5)); }
+            to { filter: drop-shadow(0 0 10px rgba(255, 107, 122, 1)); }
+        }
+
+        .judgment-text {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 900;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .judgment-text.show { animation: popFade 0.5s ease-out forwards; }
+        @keyframes popFade {
+            0% { opacity: 1; transform: translate(-50%, -30%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+        }
+
+        .judg-perfect { color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+        .judg-great { color: #5cf68b; text-shadow: 0 0 10px #5cf68b; }
+        .judg-miss { color: var(--accent-color); text-shadow: 0 0 10px var(--accent-color); }
+
+        /* --- UI OVERLAYS --- */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 0, 8, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+            padding: 1rem; 
+        }
+
+        .overlay h2 {
+            font-size: 1.4rem; 
+            margin-bottom: 0.2rem;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem; 
+            font-size: 1rem; 
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 0 #b0213a; 
+        }
+        .btn:hover {
+            background-color: var(--highlight-color);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(232, 51, 74, 0.4);
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b0213a;
+        }
+
+        .results-stats { 
+            margin: 0.5rem 0; 
+            font-size: 0.95rem; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.3rem;
+        }
+        .bonus-text { 
+            color: var(--highlight-color); 
+            font-size: 1.2rem; 
+            font-weight: 900; 
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .controls-hint {
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        kbd {
+            background: rgba(255, 179, 187, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 179, 187, 0.3);
+            color: var(--text-main);
+        }
+
+        .song-info-text {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+            letter-spacing: 1px;
+            z-index: 2;
         }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="scoreDisplay">Pears: 0</div>
-        <img id="player" src="images/tetoclick.png" alt="Teto">
-        
-        <div id="startScreen">
-            <h1>Teto Pear Catcher</h1>
-            <p>Use arrow keys or A/D to move Teto and catch falling pears!</p>
-            <button id="startButton">Start Game</button>
+
+    <div id="bg"></div>
+
+    <div class="ui-wrapper">
+        <div class="header">
+            <h1>Baguette Mania</h1>
+            <div class="stats-panel">
+                <div>Score: <span id="scoreDisplay" class="stat-value">0</span></div>
+                <div>Combo: <span id="comboDisplay" class="stat-value">0</span></div>
+                <div>Acc: <span id="accDisplay" class="stat-value">100%</span></div>
+            </div>
         </div>
-        
-        <div id="gameOverScreen">
-            <h1>Game Over!</h1>
-            <p id="finalScore">You caught 0 pears!</p>
-            <button id="restartButton">Play Again</button>
+
+        <div class="game-container" id="gameContainer">
+            
+            <div class="overlay" id="startScreen">
+                <h2>Catch the Baguettes! 🥖</h2>
+                <p style="margin-top: 0.2rem; font-size: 0.9rem; color: var(--text-muted);">Hit the notes when they reach the indicator.</p>
+                <button class="btn" id="startBtn">Play Now</button>
+            </div>
+
+            <div class="overlay hidden" id="resultScreen">
+                <h2>Song Cleared!</h2>
+                <div class="results-stats">
+                    <div>Total Score: <span id="finalScore" class="stat-value">0</span></div>
+                    <div>Max Combo: <span id="finalCombo" class="stat-value">0</span></div>
+                    <div>Accuracy: <span id="finalAcc" class="stat-value">0%</span></div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                        Perfect: <span id="countP">0</span> | Great: <span id="countG">0</span> | Miss: <span id="countM">0</span>
+                    </div>
+                </div>
+                <div class="bonus-text" id="bonusText">+0 Profile XP Earned!</div>
+                <button class="btn" onclick="returnToProfile()">Claim Tetos</button>
+            </div>
+
+            <div class="lane" id="lane0">
+                <a class="judgement-indicator" id="indicator0">
+                    <span class="judgement-baguette">🥖</span>
+                    <span class="key-text">A</span>
+                </a>
+                <div class="judgment-text" id="judg0"></div>
+            </div>
+            <div class="lane" id="lane1">
+                <a class="judgement-indicator" id="indicator1">
+                    <span class="judgement-baguette">🥖</span>
+                    <span class="key-text">D</span>
+                </a>
+                <div class="judgment-text" id="judg1"></div>
+            </div>
         </div>
+
+        <div class="controls-hint">Use <kbd>A</kbd> and <kbd>D</kbd> keys to play.</div>
     </div>
 
     <script>
-        const player = document.getElementById('player');
-        const gameContainer = document.getElementById('gameContainer');
-        const scoreDisplay = document.getElementById('scoreDisplay');
+        // --- SETTINGS INTEGRATION ---
+        let sfxVolumeScale = 1.0;
+        let FALL_DURATION = 1500; 
+        let HIT_WINDOW_PERFECT = 80; 
+        let HIT_WINDOW_GREAT = 150; 
+        let NOTE_DENSITY = 0.7; // Higher number = more dense notes
+
+        try {
+            const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
+            if (savedSettings) {
+                sfxVolumeScale = savedSettings.sfxVolume;
+                FALL_DURATION = savedSettings.speed;
+                
+                if (savedSettings.difficulty === 'easy') {
+                    HIT_WINDOW_PERFECT = 120; HIT_WINDOW_GREAT = 200; NOTE_DENSITY = 0.5;
+                } else if (savedSettings.difficulty === 'hard') {
+                    HIT_WINDOW_PERFECT = 50; HIT_WINDOW_GREAT = 100; NOTE_DENSITY = 0.85;
+                }
+            }
+        } catch(e) { console.warn("Could not load minigame settings:", e); }
+
+
+        // --- AUDIO SETUP ---
+        const sfxTap = new Audio('sounds/tap.mp3');         
+        const sfxHit = new Audio('sounds/hit.mp3');         
+        const sfxMiss = new Audio('sounds/miss.mp3');       
+        const sfxComplete = new Audio('sounds/complete.mp3'); 
+
+        sfxTap.volume = 0.3;
+        sfxHit.volume = 0.6;
+        sfxMiss.volume = 0.5;
+        sfxComplete.volume = 0.8;
+
+        function playSound(audioObj) {
+            let clone = audioObj.cloneNode();
+            clone.volume = audioObj.volume * sfxVolumeScale; // Apply the Settings multiplier
+            clone.play().catch(e => console.warn("Audio play failed:", e));
+        }
+        // -------------------
+
         const startScreen = document.getElementById('startScreen');
-        const startButton = document.getElementById('startButton');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        const finalScore = document.getElementById('finalScore');
-        const restartButton = document.getElementById('restartButton');
+        const resultScreen = document.getElementById('resultScreen');
+        const startBtn = document.getElementById('startBtn');
+        const lanes = [document.getElementById('lane0'), document.getElementById('lane1')];
+        const indicators = [document.getElementById('indicator0'), document.getElementById('indicator1')];
+        const judgments = [document.getElementById('judg0'), document.getElementById('judg1')];
+        
+        const scoreDisp = document.getElementById('scoreDisplay');
+        const comboDisp = document.getElementById('comboDisplay');
+        const accDisp = document.getElementById('accDisplay');
+        
+        let isPlaying = false;
+        let startTime;
+        let animationFrameId;
         
         let score = 0;
-        let gameActive = false;
-        let playerY = window.innerWidth / 2;
-        const playerSpeed = 8;
-        let pears = [];
-        let gameLoopId;
-        let pearSpawnInterval;
-        let gameTime = 30000; 
-        let timeLeft = gameTime;
+        let combo = 0;
+        let maxCombo = 0;
+        let totalHits = 0;
+        let hitCounts = { perfect: 0, great: 0, miss: 0 };
         
-        const keys = {
-            ArrowLeft: false,
-            ArrowRight: false,
-            a: false,
-            d: false
-        };
-        
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) {
-                keys[e.key] = true;
+        let chart = []; 
+        let currentBaseBonus = 0;
+
+        function generateChart() {
+            let notes = [];
+            let time = 2000; 
+            
+            for(let i = 0; i < 50; i++) {
+                notes.push({
+                    id: i,
+                    time: time,
+                    lane: Math.floor(Math.random() * 2),
+                    spawned: false,
+                    hit: false,
+                    missed: false,
+                    el: null
+                });
+                let gap = (Math.random() > NOTE_DENSITY) ? 250 : 500; // Applied settings density
+                time += gap;
             }
-        });
-        
-        window.addEventListener('keyup', (e) => {
-            if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) {
-                keys[e.key] = false;
-            }
-        });
-        
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', startGame);
-        
+            return notes;
+        }
+
         function startGame() {
-            score = 0;
-            timeLeft = gameTime;
-            scoreDisplay.textContent = `Pears: ${score}`;
+            startScreen.classList.add('hidden');
+            chart = generateChart();
+            score = 0; combo = 0; maxCombo = 0; totalHits = 0;
+            hitCounts = { perfect: 0, great: 0, miss: 0 };
+            updateStats();
             
-            pears.forEach(pear => pear.element.remove());
-            pears = [];
-            
-            startScreen.style.display = 'none';
-            gameOverScreen.style.display = 'none';
-            
-            playerX = window.innerWidth / 2;
-            updatePlayerPosition();
-            
-            gameActive = true;
-            pearSpawnInterval = setInterval(spawnPear, 800);
-            gameLoopId = requestAnimationFrame(gameLoop);
-            
-            setTimeout(endGame, gameTime);
-        }
-        
-        function endGame() {
-            gameActive = false;
-            clearInterval(pearSpawnInterval);
-            cancelAnimationFrame(gameLoopId);
-            
-            window.parent.postMessage({
-                type: 'minigameScore',
-                score: score
-            }, '*');
-            
-            finalScore.textContent = `You caught ${score} pears!`;
-            gameOverScreen.style.display = 'flex';
-        }
-        
-        function gameLoop() {
-            if (!gameActive) return;
-            
-            if (keys.ArrowLeft || keys.a) {
-                playerX -= playerSpeed;
-            }
-            if (keys.ArrowRight || keys.d) {
-                playerX += playerSpeed;
-            }
-            
-            playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
-            updatePlayerPosition();
-            
-            pears.forEach((pear, index) => {
-                pear.y += pear.speed;
-                pear.element.style.top = `${pear.y}px`;
-                
-                if (
-                    pear.y + 70 >= window.innerHeight - 140 && 
-                    pear.y <= window.innerHeight - 20 &&
-                    pear.x >= playerX - 60 && 
-                    pear.x <= playerX + 60
-                ) {
-                    pear.element.remove();
-                    pears.splice(index, 1);
-                    score++;
-                    scoreDisplay.textContent = `Pears: ${score}`;
-                }
-                else if (pear.y > window.innerHeight) {
-                    pear.element.remove();
-                    pears.splice(index, 1);
-                }
-            });
-            
+            isPlaying = true;
+            startTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
-        
-        function spawnPear() {
-            if (!gameActive) return;
+
+        function gameLoop(currentTime) {
+            if (!isPlaying) return;
+
+            let elapsedTime = currentTime - startTime;
+            let trackHeight = lanes[0].clientHeight;
+            let hitY = trackHeight - 75; 
             
-            const pear = document.createElement('img');
-            pear.className = 'pear';
-            pear.src = 'images/pear.png';
-            pear.alt = 'Pear';
-            
-            const x = Math.random() * (window.innerWidth - 60);
-            const speed = 3 + Math.random() * 3; 
-            
-            pear.style.left = `${x}px`;
-            pear.style.top = '0px';
-            
-            gameContainer.appendChild(pear);
-            
-            pears.push({
-                element: pear,
-                x: x,
-                y: 0,
-                speed: speed
-            });
+            for (let i = 0; i < chart.length; i++) {
+                let note = chart[i];
+                if (note.hit || note.missed) continue;
+
+                if (!note.spawned && elapsedTime >= note.time - FALL_DURATION) {
+                    spawnNoteElement(note);
+                }
+
+                if (note.spawned && note.el) {
+                    let progress = (elapsedTime - (note.time - FALL_DURATION)) / FALL_DURATION;
+                    let currentY = progress * hitY;
+                    note.el.style.transform = `translateY(${currentY + 26}px)`; 
+
+                    if (elapsedTime > note.time + HIT_WINDOW_GREAT) {
+                        registerHit('miss', note);
+                    }
+                }
+            }
+
+            let lastNoteTime = chart[chart.length - 1].time;
+            if (elapsedTime > lastNoteTime + 2000) {
+                endGame();
+                return;
+            }
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
-        
-        function updatePlayerPosition() {
-            player.style.left = `${playerX - 60}px`;
+
+        function spawnNoteElement(note) {
+            let el = document.createElement('div');
+            el.className = 'note';
+            el.innerText = '🥖';
+            
+            let colors = ['#ff6b7a', '#ffb3bb', '#ffffff', '#e8334a'];
+            el.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            lanes[note.lane].appendChild(el);
+            note.el = el;
+            note.spawned = true;
         }
-        
-        window.addEventListener('resize', () => {
-            if (gameActive) {
-                playerX = Math.max(60, Math.min(window.innerWidth - 60, playerX));
-                updatePlayerPosition();
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying || e.repeat) return;
+            let laneIndex = -1;
+            if (e.key.toLowerCase() === 'a') laneIndex = 0;
+            if (e.key.toLowerCase() === 'd') laneIndex = 1;
+            
+            if (laneIndex !== -1) {
+                playSound(sfxTap); 
+                pressKey(laneIndex);
             }
         });
+
+        document.addEventListener('keyup', (e) => {
+            let laneIndex = -1;
+            if (e.key.toLowerCase() === 'a') laneIndex = 0;
+            if (e.key.toLowerCase() === 'd') laneIndex = 1;
+            if (laneIndex !== -1) indicators[laneIndex].classList.remove('active');
+        });
+
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!isPlaying) return;
+                playSound(sfxTap); 
+                pressKey(index);
+                indicator.classList.add('active');
+                setTimeout(() => indicator.classList.remove('active'), 100);
+            });
+        });
+
+        function pressKey(laneIndex) {
+            indicators[laneIndex].classList.add('active');
+            let currentTime = performance.now() - startTime;
+            let noteToHit = chart.find(n => n.lane === laneIndex && !n.hit && !n.missed && n.spawned);
+            
+            if (noteToHit) {
+                let timeDiff = Math.abs(currentTime - noteToHit.time);
+                if (timeDiff <= HIT_WINDOW_PERFECT) registerHit('perfect', noteToHit);
+                else if (timeDiff <= HIT_WINDOW_GREAT) registerHit('great', noteToHit);
+                else if (timeDiff <= HIT_WINDOW_GREAT + 50) registerHit('miss', noteToHit);
+            }
+        }
+
+        function registerHit(judgment, note) {
+            note.hit = (judgment !== 'miss');
+            note.missed = (judgment === 'miss');
+            totalHits++;
+            if (note.el) { note.el.remove(); note.el = null; }
+
+            if (judgment === 'perfect') { 
+                score += 300; combo++; hitCounts.perfect++; 
+                playSound(sfxHit);
+            }
+            else if (judgment === 'great') { 
+                score += 100; combo++; hitCounts.great++; 
+                playSound(sfxHit);
+            }
+            else { 
+                combo = 0; hitCounts.miss++; 
+                playSound(sfxMiss);
+            }
+
+            if (combo > maxCombo) maxCombo = combo;
+            showJudgmentText(note.lane, judgment);
+            updateStats();
+        }
+
+        function showJudgmentText(laneIndex, text) {
+            let judgEl = judgments[laneIndex];
+            judgEl.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
+            void judgEl.offsetWidth; 
+            judgEl.innerText = text.toUpperCase();
+            judgEl.classList.add(`judg-${text}`, 'show');
+        }
+
+        function updateStats() {
+            scoreDisp.innerText = score;
+            comboDisp.innerText = combo;
+            if (totalHits === 0) accDisp.innerText = "100%";
+            else {
+                let acc = (((hitCounts.perfect * 300) + (hitCounts.great * 100)) / (totalHits * 300)) * 100;
+                accDisp.innerText = acc.toFixed(1) + "%";
+            }
+        }
+
+        function endGame() {
+            isPlaying = false;
+            cancelAnimationFrame(animationFrameId);
+            document.querySelectorAll('.note').forEach(n => n.remove());
+
+            playSound(sfxComplete);
+
+            let finalAccNum = parseFloat(accDisp.innerText);
+            currentBaseBonus = Math.floor(score / 100) + (maxCombo * 2);
+            if (finalAccNum > 95) currentBaseBonus += 50;
+            else if (finalAccNum > 80) currentBaseBonus += 20;
+
+            let actualTetosEarned = currentBaseBonus * 10;
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalCombo').innerText = maxCombo;
+            document.getElementById('finalAcc').innerText = accDisp.innerText;
+            document.getElementById('countP').innerText = hitCounts.perfect;
+            document.getElementById('countG').innerText = hitCounts.great;
+            document.getElementById('countM').innerText = hitCounts.miss;
+            document.getElementById('bonusText').innerText = `+${actualTetosEarned} Tetos Earned!`;
+
+            resultScreen.classList.remove('hidden');
+        }
+
+        function returnToProfile() {
+            window.parent.postMessage({ type: 'minigameScore', score: currentBaseBonus }, '*');
+        }
+
+        startBtn.addEventListener('click', startGame);
     </script>
 </body>
 </html>

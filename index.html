@@ -1,572 +1,1056 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teto Clicker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --red: #e8334a;
+            --red-light: #ff6b7a;
+            --red-dark: #b0213a;
+            --pink: #ffb3bb;
+            --cream: #fff5f6;
+            --dark: #2a1015;
+            --panel-bg: rgba(255,255,255,0.12);
+            --panel-border: rgba(255,255,255,0.25);
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background-color: #f7f2f5;
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background: #1a0a0e;
+            color: white;
+            cursor: default;
         }
 
-        .container {
+        /* ── Background ── */
+        #bg {
+            position: fixed; inset: 0; z-index: 0;
+            background: url('images/wallpaper.jpg') center/cover no-repeat;
+            filter: blur(6px) brightness(0.55);
+            transform: scale(1.05);
+        }
+
+        #tetoCanvas, #particleCanvas {
+            position: fixed; inset: 0; z-index: 1;
+            pointer-events: none;
+        }
+        #particleCanvas { z-index: 15; }
+
+        /* ── Layout (Wider Panels) ── */
+        #layout {
+            position: relative; z-index: 10;
+            display: grid;
+            grid-template-columns: 340px 1fr 340px; 
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* ── Panels ── */
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--panel-border);
+            padding: 24px; 
+            overflow-y: auto;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-direction: column;
+            gap: 14px; 
+        }
+        .panel:last-child {
+            border-right: none;
+            border-left: 1px solid var(--panel-border);
         }
 
-        .sectionLeft, .sectionRight {
-            padding: 10px;
-        }
-
-        .sectionLeft {
-            flex: 1 1 60%;
+        .panel-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.4rem; 
+            color: var(--pink);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
             text-align: center;
         }
 
-        .sectionRight {
-            flex: 1 1 35%;
-            max-width: 400px;
+        /* ── Stats panel ── */
+        .stat-box {
+            background: rgba(232,51,74,0.18);
+            border: 1px solid rgba(232,51,74,0.35);
+            border-radius: 16px; 
+            padding: 14px 20px; 
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.9rem; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--pink);
+            opacity: 0.85;
+        }
+        .stat-value {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem; 
+            color: white;
+            line-height: 1.2;
+            margin-top: 4px;
         }
 
-        .scorecontainer {
-            background-color: rgba(238, 200, 214, 0.6);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0 auto;
-            max-width: 300px;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .click-animation {
-            animation: pop 0.2s ease;
-        }
-
-        .clickerContainer img {
+        /* ── Center ── */
+        #center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px; 
             position: relative;
         }
 
-        .shop-button {
+        #tetoCount {
+            font-family: 'Fredoka One', cursive;
+            font-size: 4.5rem; 
+            color: white;
+            text-shadow: 0 0 40px rgba(232,51,74,0.8), 0 4px 12px rgba(0,0,0,0.5);
+            text-align: center;
+            line-height: 1;
+        }
+        #tetoCount span {
+            display: block;
+            font-size: 1.4rem; 
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            color: var(--pink);
+            opacity: 0.9;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        #clickerWrapper {
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 15px;
-            background-color: rgba(238, 200, 214, 0.6);
-            border-radius: 10px;
+            justify-content: center;
+        }
+
+        #clickerGlow {
+            position: absolute;
+            width: 340px; height: 340px; 
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(232,51,74,0.45) 0%, transparent 70%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        #mainTeto {
+            position: relative;
+            width: 280px; height: 280px; 
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: transform 0.08s ease;
+            filter: drop-shadow(0 12px 36px rgba(232,51,74,0.5));
+            user-select: none;
+            -webkit-user-drag: none;
+            z-index: 2;
+        }
+        #mainTeto:active { transform: scale(0.92); }
+        #mainTeto.clicked { animation: clickBounce 0.15s ease; }
+        @keyframes clickBounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(0.88); }
+            100% { transform: scale(1); }
         }
 
-        .shop-button:hover {
-            background-color: rgba(238, 200, 214, 0.8);
+        #tpsBar { width: 340px; text-align: center; } 
+        #tpsLabel {
+            font-size: 1rem; color: var(--pink); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+        }
+        #tpsTrack { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+        #tpsFill {
+            height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--pink)); border-radius: 5px; transition: width 0.5s ease;
         }
 
-        .shop-button img {
-            width: 64px;
-            height: 64px;
-            border: 2px solid #999;
-            border-radius: 8px;
-            margin-right: 20px;
-        }
-
-        .shop-button div {
-            flex-grow: 1;
-            padding: 0 10px;
-        }
-
-        .shop-button div p:first-child {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .shop-button div p:last-child {
-            font-size: 14px;
-            margin: 0;
-            color: #2d802f;
-        }
-
-        .shop-button span {
-            font-size: 24px;
-            font-weight: bold;
-            color: #222;
-            min-width: 30px;
-            text-align: right;
-        }
-
-        #teto {
-            margin-top: 10px;
-        }
-
-        #saveBtn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            background-color: #d17299;
+        /* ── Buttons ── */
+        .btn {
+            background: linear-gradient(135deg, var(--red-dark), var(--red));
+            border: 2px solid var(--red-light);
             color: white;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.3rem; 
+            padding: 14px 36px; 
+            border-radius: 60px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 20px rgba(232,51,74,0.4);
+            transition: all 0.2s ease;
+            line-height: 1.2;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,51,74,0.6); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(1); }
+
+        .btn-small {
+            font-size: 1rem; padding: 10px 16px; border-radius: 12px; width: 100%; margin-top: 4px;
+            background: rgba(232,51,74,0.2); border: 1px solid rgba(232,51,74,0.5); color: white; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-small:hover { background: rgba(232,51,74,0.4); }
+
+        /* ── Upgrades ── */
+        .upgrade-item {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 14px; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: grid;
+            grid-template-columns: 56px 1fr; 
+            gap: 12px;
+            align-items: center;
+        }
+        .upgrade-item:hover:not(.locked) {
+            background: rgba(232,51,74,0.2); border-color: rgba(232,51,74,0.5); transform: translateX(3px);
+        }
+        .upgrade-item.locked { opacity: 0.45; cursor: not-allowed; }
+
+        .upgrade-icon {
+            width: 56px; height: 56px; border-radius: 12px; background: rgba(232,51,74,0.25); 
+            display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+            overflow: hidden;
+        }
+        
+        .upgrade-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .upgrade-name { font-weight: 800; font-size: 1.1rem; color: white; margin-bottom: 2px; } 
+        .upgrade-desc { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.3; margin-bottom: 4px; }
+        .upgrade-cost { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--pink); } 
+
+        /* ── Modals (Settings & Admin) ── */
+        .modal-bg {
+            display: none; 
+            position: fixed; inset: 0; z-index: 3000;
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+        }
+        .modal-panel {
+            background: rgba(26, 10, 14, 0.95);
+            border: 3px solid var(--red-light);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(232,51,74,0.6);
+            backdrop-filter: blur(10px);
+            width: 450px;
+        }
+        .modal-input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .modal-input-group label {
+            display: block;
+            color: var(--pink);
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .modal-input-group input[type="range"] {
+            width: 100%;
             cursor: pointer;
         }
-
-        #saveBtn:hover {
-            background-color: #ba5d86;
-        }
-        #resetBtn {
-    margin-top: 10px;
-    padding: 8px 16px;
-    font-size: 16px;
-    border: none;
-    border-radius: 6px;
-    background-color: #c74747;
-    color: white;
-    cursor: pointer;
-}
-
-#resetBtn:hover {
-    background-color: #a83737;
-}
-
-#loadBtn {
-    margin-top: 10px;
-    padding: 8px 16px;
-    font-size: 16px;
-    border: none;
-    border-radius: 6px;
-    background-color: #d17299;
-    color: white;
-    cursor: pointer;
-    margin-left: 10px;
-    margin-right: 10px;
-}
-
-#loadBtn:hover {
-    background-color: #ba5d86;
-}
-
-.button-group {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-    gap: 10px;
-}
-
-        @media screen and (max-width: 768px) {
-            .sectionLeft, .sectionRight {
-                flex: 1 1 100%;
-                max-width: 100%;
-            }
+        .modal-input-group input[type="number"], .modal-input-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--red);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 1.1rem;
+            font-family: 'Fredoka One', cursive;
         }
 
-        @keyframes fade {
-    0% { opacity: 1; }
-    50% { opacity: 0.3; }
-    100% { opacity: 1; }
-}
+        /* ── Prestige Flash Animation ── */
+        #prestigeFlash {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh;
+            background: url('images/tetobg.jpg') center/cover no-repeat; 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center;
+            animation: prestigeBgFade 1.5s ease-in-out forwards;
+        }
+        
+        @keyframes prestigeBgFade {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
 
-#teto.event-active {
-    animation: fade 1s infinite;
-}
+        @keyframes prestigeFlashAnim {
+            0% { opacity: 0; transform: scale(0.7); filter: drop-shadow(0 0 10px #e8334a); }
+            20% { opacity: 1; transform: scale(1.4); filter: drop-shadow(0 0 100px #ff6b7a); } 
+            50% { opacity: 1; transform: scale(1.1); filter: drop-shadow(0 0 60px #e8334a); }
+            80% { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 100px #ff6b7a); }
+            100% { opacity: 0; transform: scale(0.7); filter: drop-shadow(0 0 10px #e8334a); }
+        }
 
-#bonusIndicator {
-    display: none;
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background-color: gold;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-    z-index: 1000;
-}
+        /* ── Minigame modal ── */
+        #minigameModal {
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+        }
+        #minigameModal.open { display: flex; }
+        #minigameFrame {
+            width: min(900px, 95vw); height: min(650px, 90vh); border: 2px solid var(--red); 
+            border-radius: 16px; box-shadow: 0 0 80px rgba(232,51,74,0.5); background: black;
+        }
+        #closeMinigame {
+            position: absolute; top: 20px; right: 24px; background: var(--red); border: none; color: white;
+            font-family: 'Fredoka One', cursive; font-size: 1.2rem; padding: 10px 24px; border-radius: 50px; cursor: pointer; z-index: 101;
+        }
 
-#bonusTeto {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    display: none;
-    cursor: pointer;
-    opacity: 1;
-    transition: opacity 2s ease-out;
-    z-index: 999;
-    animation: pulse 1s infinite;
-}
+        .float-text {
+            position: fixed; font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: white; 
+            text-shadow: 0 0 15px rgba(232,51,74,0.9); pointer-events: none; z-index: 50;
+            animation: floatUp 0.9s ease forwards;
+        }
+        @keyframes floatUp {
+            0%   { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.4); } 
+        }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-@keyframes prestigeFlashAnim {
-    0% { opacity: 0; transform: scale(0.7); }
-    20% { opacity: 1; transform: scale(1.1); }
-    50% { opacity: 1; transform: scale(1); }
-    80% { opacity: 1; transform: scale(1.1); }
-    100% { opacity: 0; transform: scale(0.7); }
-}
-
+        .panel::-webkit-scrollbar { width: 6px; } 
+        .panel::-webkit-scrollbar-thumb { background: rgba(232,51,74,0.5); border-radius: 3px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sectionLeft">
-            <div class="scorecontainer">
-                <span id="score">0</span> Teto <br>
-                <span id="scorepersecond">0</span> Teto per second
-            </div>
 
-            <div class="clickerContainer">
-                <img id="teto" src="images/tetoclick.png" alt="teto" height="156px" width="156px" onclick="animateTeto(); addToScore(clickingPower)">
-            </div>
+<div id="bg"></div>
+<canvas id="tetoCanvas"></canvas>
+<canvas id="particleCanvas"></canvas>
 
-            <div class="button-group">
-                <button id="saveBtn" onclick="saveGame()">Save Game</button>
-                <button id="resetBtn" onclick="resetGame()">Reset Game</button>
-                <button id="loadBtn" onclick="loadGame()">Load Game</button>
-            </div>
-
-            <!-- Prestige Section -->
-            <div id="prestigeSection" style="margin-top:20px; background:#ffe4fa; border-radius:10px; padding:15px; max-width:320px; margin-left:auto; margin-right:auto;">
-                <div style="font-size:18px; font-weight:bold; color:#b84fa3;">Prestige</div>
-                <div style="margin:8px 0;">Teto Tokens: <span id="tetoTokens">0</span></div>
-                <button id="prestigeBtn" onclick="prestige()" style="background:#b84fa3; color:white; border:none; border-radius:6px; padding:8px 16px; font-size:16px; cursor:pointer;">Prestige for <span id="prestigeGain">0</span> Teto Tokens</button>
-            </div>
-
-            <!-- Permanent Upgrades -->
-            <div id="permanentUpgradesSection" style="margin-top:15px; background:#f7eaff; border-radius:10px; padding:15px; max-width:320px; margin-left:auto; margin-right:auto;">
-                <div style="font-size:16px; font-weight:bold; color:#7a3fa3;">Permanent Upgrades</div>
-                <div id="permanentUpgradesList"></div>
-            </div>
+<div id="layout">
+    <div class="panel" id="statsPanel">
+        <div class="panel-title">📊 Stats</div>
+        <div class="stat-box">
+            <div class="stat-label">Total Tetos</div>
+            <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Tetos / Second</div>
+            <div class="stat-value" id="statTPS">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Tetos / Click</div>
+            <div class="stat-value" id="statTPC">1</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Minigame High Score</div>
+            <div class="stat-value" id="statMinigame">0</div>
         </div>
 
+        <div class="panel-title" style="margin-top:16px;">✨ Prestige</div>
+        <div class="stat-box" style="background: rgba(255, 179, 187, 0.2); border-color: var(--pink);">
+            <div class="stat-label" style="color: white;">Teto Tokens</div>
+            <div class="stat-value" id="statTokens" style="color: var(--pink);">0</div>
+        </div>
+        <button class="btn btn-small" id="prestigeBtn" onclick="doPrestige()" style="padding: 12px;">
+            Prestige (+<span id="prestigeGain">0</span> Tokens)
+        </button>
         
-
-        <div class="sectionRight">
-            <div class="shop-button" onclick="buyBread()">
-                <img src="images/Bread.png" alt="Bread">
-                <div>
-                    <p>Baguette</p>
-                    <p><span id="breadCost">15</span> Teto</p>
-                </div>
-                <span id="baguettes">0</span>
-            </div>
-
-            <div class="shop-button" onclick="buyMiku()">
-                <img src="images/Miku.png" alt="Miku">
-                <div>
-                    <p>Miku</p>
-                    <p><span id="MikuCost">100</span> Teto</p>
-                </div>
-                <span id="Miku">0</span>
-            </div>
-
-            <div class="shop-button" onclick="buyPear()">
-                <img src="images/pear.png" alt="Pear">
-                <div>
-                    <p>Pear</p>
-                    <p><span id="PearCost">1000</span> Teto</p>
-                </div>
-                <span id="Pear">0</span>
-            </div>
+        <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button class="btn btn-small" onclick="saveGame()">Save</button>
+            <button class="btn btn-small" onclick="loadGame()">Load</button>
+            <button class="btn btn-small" onclick="resetGame()" style="background: rgba(200,0,0,0.3);">Reset</button>
         </div>
+
+        <button class="btn btn-small" onclick="openSettingsPanel()" style="margin-top: 10px; background: rgba(0,0,0,0.3); border-color: #555;">
+            ⚙️ Settings
+        </button>
     </div>
 
+    <div id="center">
+        <div id="tetoCount">
+            <span>Tetos Summoned</span>
+            <div id="tetoNumberDisplay">0</div>
+        </div>
 
+        <div id="clickerWrapper">
+            <div id="clickerGlow"></div>
+            <img id="mainTeto" src="images/tetoclick.png" alt="Teto" draggable="false">
+        </div>
 
-    <script>
-        let score = 0;
-        let clickingPower = 1;
-        let bonusMultiplier = 1;
-        let tetoTokens = 0;
-        let permanentBonusMultiplier = 1;
+        <div id="tpsBar">
+            <div id="tpsLabel">Teto Power: 0 / sec</div>
+            <div id="tpsTrack"><div id="tpsFill"></div></div>
+        </div>
 
-        // Upgrades array
-        const upgrades = [
-            {
-                name: 'Baguette',
-                cost: 15,
-                baseCost: 15,
-                amount: 0,
-                increment: 1,
-                costId: 'breadCost',
-                amountId: 'baguettes',
-                buy: function() { buyUpgrade(0); }
-            },
-            {
-                name: 'Miku',
-                cost: 100,
-                baseCost: 100,
-                amount: 0,
-                increment: 5,
-                costId: 'MikuCost',
-                amountId: 'Miku',
-                buy: function() { buyUpgrade(1); }
-            },
-            {
-                name: 'Pear',
-                cost: 1000,
-                baseCost: 1000,
-                amount: 0,
-                increment: 10,
-                costId: 'PearCost',
-                amountId: 'Pear',
-                buy: function() { buyUpgrade(2); }
-            }
-        ];
+        <button class="btn" id="minigameBtn">
+            🥖 Play Baguette Mania<br>
+            <span style="font-size: 0.85rem; opacity: 0.8; display: block; margin-top: 6px;">Costs 20% of your current Tetos</span>
+        </button>
+    </div>
 
-        const permanentUpgrades = [
-            {
-                name: '+10% All Production',
-                cost: 10,
-                effect: 0.10, // 10% per purchase
-                purchased: 0
-            }
-        ];
+    <div class="panel">
+        <div class="panel-title">⬆️ Upgrades</div>
+        <div id="upgradeList"></div>
 
-        function buyUpgrade(index) {
-            const upg = upgrades[index];
-            if (score >= upg.cost) {
-                score -= upg.cost;
-                upg.amount++;
-                upg.cost = Math.round(upg.cost * 1.15);
-                updateDisplay();
-                // Pear minigame logic
-                if (index === 2 && Math.random() < 0.1) {
-                    showMinigame();
-                }
-            }
-        }
-
-        // Attach buy functions to buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.shop-button[onclick="buyBread()"]').onclick = upgrades[0].buy;
-            document.querySelector('.shop-button[onclick="buyMiku()"]').onclick = upgrades[1].buy;
-            document.querySelector('.shop-button[onclick="buyPear()"]').onclick = upgrades[2].buy;
-        });
-
-        function addToScore(amount) {
-            score += amount * bonusMultiplier * permanentBonusMultiplier;
-            updateDisplay();
-        }
-
-        function getTotalPerSecond() {
-            return Math.round(upgrades.reduce((sum, upg) => sum + upg.amount * upg.increment, 0) * permanentBonusMultiplier);
-        }
-
-        function updateDisplay() {
-            document.getElementById('score').textContent = score;
-            upgrades.forEach(upg => {
-                document.getElementById(upg.costId).textContent = upg.cost;
-                document.getElementById(upg.amountId).textContent = upg.amount;
-            });
-            document.getElementById('scorepersecond').textContent = getTotalPerSecond();
-            updatePrestigeUI();
-            updatePermanentUpgradesUI();
-        }
-
-        function animateTeto() {
-            const teto = document.getElementById('teto');
-            teto.classList.add('click-animation');
-            setTimeout(() => teto.classList.remove('click-animation'), 200);
-        }
-
-        setInterval(() => {
-            score += getTotalPerSecond() * bonusMultiplier;
-            updateDisplay();
-            document.title = `${score} Tetos - Teto Clicker`;
-            updatePrestigeUI();
-        }, 1000);
-
-        function saveGame() {
-            const gameSave = {
-                score,
-                clickingPower,
-                upgrades: upgrades.map(upg => ({
-                    cost: upg.cost,
-                    amount: upg.amount
-                })),
-                tetoTokens,
-                permanentUpgrades: permanentUpgrades.map(upg => upg.purchased)
-            };
-            localStorage.setItem('gameSave', JSON.stringify(gameSave));
-        }
-
-        function loadGame() {
-            const savedGame = JSON.parse(localStorage.getItem('gameSave'));
-            if (!savedGame) return;
-            if (typeof savedGame.score !== 'undefined') score = savedGame.score;
-            if (typeof savedGame.clickingPower !== 'undefined') clickingPower = savedGame.clickingPower;
-            if (Array.isArray(savedGame.upgrades)) {
-                savedGame.upgrades.forEach((savedUpg, i) => {
-                    if (upgrades[i]) {
-                        upgrades[i].cost = savedUpg.cost;
-                        upgrades[i].amount = savedUpg.amount;
-                    }
-                });
-            }
-            if (typeof savedGame.tetoTokens !== 'undefined') tetoTokens = savedGame.tetoTokens;
-            if (Array.isArray(savedGame.permanentUpgrades)) {
-                savedGame.permanentUpgrades.forEach((amt, i) => {
-                    if (permanentUpgrades[i]) permanentUpgrades[i].purchased = amt;
-                });
-                updatePermanentBonus();
-            }
-            updateDisplay();
-        }
-
-        function resetGame() {
-            localStorage.removeItem('gameSave');
-            score = 0;
-            clickingPower = 1;
-            upgrades.forEach(upg => {
-                upg.cost = upg.baseCost;
-                upg.amount = 0;
-            });
-            // Do not reset tokens or permanent upgrades
-            updateDisplay();
-        }
-
-        function getPrestigeGain() {
-            // Example: 1 token per 10,000 score, minimum 0
-            return Math.floor(score / 10000);
-        }
-
-        function prestige() {
-            const gain = getPrestigeGain();
-            if (gain < 1) return;
-            showPrestigeFlash();
-            tetoTokens += gain;
-            // Reset all progress except tokens and permanent upgrades
-            score = 0;
-            clickingPower = 1;
-            upgrades.forEach(upg => {
-                upg.cost = upg.baseCost;
-                upg.amount = 0;
-            });
-            // Save permanent upgrades and tokens
-            saveGame();
-            updateDisplay();
-            updatePrestigeUI();
-            updatePermanentUpgradesUI();
-        }
-
-        function buyPermanentUpgrade(index) {
-            const upg = permanentUpgrades[index];
-            if (tetoTokens >= upg.cost) {
-                tetoTokens -= upg.cost;
-                upg.purchased++;
-                updatePermanentBonus();
-                updatePermanentUpgradesUI();
-                updatePrestigeUI();
-                saveGame();
-                updateDisplay();
-            }
-        }
-
-        function updatePermanentBonus() {
-            // Each purchase increases by 10%
-            permanentBonusMultiplier = 1 + permanentUpgrades.reduce((sum, upg) => sum + upg.effect * upg.purchased, 0);
-        }
-
-        function updatePermanentUpgradesUI() {
-            const list = document.getElementById('permanentUpgradesList');
-            list.innerHTML = '';
-            permanentUpgrades.forEach((upg, i) => {
-                const div = document.createElement('div');
-                div.style.margin = '8px 0';
-                div.innerHTML = `
-                    <span>${upg.name} (Owned: ${upg.purchased})</span><br>
-                    <button onclick="buyPermanentUpgrade(${i})" style="background:#7a3fa3; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:14px; cursor:pointer; margin-top:4px;" ${tetoTokens < upg.cost ? 'disabled' : ''}>Buy for ${upg.cost} Teto Tokens</button>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function updatePrestigeUI() {
-            document.getElementById('tetoTokens').textContent = tetoTokens;
-            document.getElementById('prestigeGain').textContent = getPrestigeGain();
-            document.getElementById('prestigeBtn').disabled = getPrestigeGain() < 1;
-        }
-
-        function showMinigame() {
-            const overlay = document.createElement('div');
-            overlay.id = 'minigameOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                z-index: 1000;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            `;
-
-            const iframe = document.createElement('iframe');
-            iframe.src = 'minigame.html';
-            iframe.style.cssText = `
-                width: 80%;
-                height: 80%;
-                border: none;
-                border-radius: 10px;
-            `;
-
-            overlay.appendChild(iframe);
-            document.body.appendChild(overlay);
-
-            window.addEventListener('message', function(event) {
-                if (event.data.type === 'minigameScore') {
-                    const bonusScore = event.data.score * 100; 
-                    score += bonusScore;
-                    updateDisplay();
-                    overlay.remove();
-                }
-            });
-        }
-
-        function showPrestigeFlash() {
-            const flash = document.getElementById('prestigeFlash');
-            flash.style.display = 'flex';
-            setTimeout(() => {
-                flash.style.display = 'none';
-            }, 1000);
-        }
-
-    </script>
-
-
-<img id="bonusTeto" src="images/tetoclick.png" alt="Bonus Teto" style="
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    display: none;
-    cursor: pointer;
-    opacity: 1;
-    transition: opacity 2s ease-out;
-    z-index: 999;
-">
-
-<!-- Prestige Animation Overlay -->
-<div id="prestigeFlash" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,255,255,0.5); z-index:2000; justify-content:center; align-items:center;">
-    <img src="images/tetoclick.png" alt="Prestige Teto" style="width:180px; height:180px; filter:drop-shadow(0 0 30px #b84fa3); animation:prestigeFlashAnim 1s linear;">
+        <div class="panel-title" style="margin-top:24px;">🌌 Permanent Upgrades</div>
+        <div id="permUpgradeList"></div>
+    </div>
 </div>
 
+<div id="settingsModal" class="modal-bg">
+    <div class="modal-panel">
+        <h2 style="color: var(--pink); font-family: 'Fredoka One', cursive; margin-bottom: 20px; font-size: 2rem;">⚙️ Settings</h2>
+        
+        <div class="modal-input-group">
+            <label>Music Volume (<span id="musicVolDisp">40</span>%)</label>
+            <input type="range" id="inputMusicVol" min="0" max="100" value="40" oninput="document.getElementById('musicVolDisp').innerText=this.value">
+        </div>
+        
+        <div class="modal-input-group">
+            <label>SFX Volume (<span id="sfxVolDisp">100</span>%)</label>
+            <input type="range" id="inputSfxVol" min="0" max="100" value="100" oninput="document.getElementById('sfxVolDisp').innerText=this.value">
+        </div>
+
+        <div class="modal-input-group">
+            <label>Minigame Scroll Speed</label>
+            <select id="inputSpeed">
+                <option value="2500">Slow</option>
+                <option value="1500" selected>Normal</option>
+                <option value="1000">Fast</option>
+                <option value="600">Insane</option>
+            </select>
+        </div>
+
+        <div class="modal-input-group">
+            <label>Minigame Difficulty</label>
+            <select id="inputDiff">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button class="btn btn-small" onclick="applySettings()" style="background: var(--highlight-color); color: white;">Save Changes</button>
+            <button class="btn btn-small" onclick="document.getElementById('settingsModal').style.display='none'" style="background: transparent;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="adminModal" class="modal-bg">
+    <div class="modal-panel">
+        <h2 style="color: var(--pink); font-family: 'Fredoka One', cursive; margin-bottom: 20px; font-size: 2rem;">🛠️ Dev Panel</h2>
+        
+        <div class="modal-input-group">
+            <label>Set Tetos:</label>
+            <input type="number" id="adminTetosInput" value="0">
+        </div>
+        
+        <div class="modal-input-group">
+            <label>Set Teto Tokens:</label>
+            <input type="number" id="adminTokensInput" value="0">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button class="btn btn-small" onclick="applyAdminChanges()" style="background: #5cf68b; border-color: #00ffcc; color: #1a0a0e;">Apply Hacks</button>
+            <button class="btn btn-small" onclick="document.getElementById('adminModal').style.display='none'" style="background: transparent;">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="minigameModal">
+    <button id="closeMinigame">✕ Close</button>
+    <iframe id="minigameFrame" src="about:blank" frameborder="0"></iframe>
+</div>
+
+<div id="prestigeFlash">
+    <img src="images/tetoclick.png" alt="Prestige Teto" style="width:280px; height:280px; filter:drop-shadow(0 0 50px #e8334a); animation:prestigeFlashAnim 1.5s ease-in-out forwards;">
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  SETTINGS SYSTEM
+// ══════════════════════════════════════════
+let gameSettings = {
+    musicVolume: 0.4,
+    sfxVolume: 1.0,
+    speed: 1500, // 1500ms fall duration (normal)
+    difficulty: 'normal'
+};
+
+let currentMusicGainNode = null; // Used to update music volume live
+
+function loadSettings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('tetoSettings'));
+        if (saved) {
+            gameSettings = Object.assign(gameSettings, saved);
+        }
+    } catch(e) {}
+}
+
+function openSettingsPanel() {
+    document.getElementById('inputMusicVol').value = gameSettings.musicVolume * 100;
+    document.getElementById('musicVolDisp').innerText = Math.round(gameSettings.musicVolume * 100);
+    
+    document.getElementById('inputSfxVol').value = gameSettings.sfxVolume * 100;
+    document.getElementById('sfxVolDisp').innerText = Math.round(gameSettings.sfxVolume * 100);
+    
+    document.getElementById('inputSpeed').value = gameSettings.speed.toString();
+    document.getElementById('inputDiff').value = gameSettings.difficulty;
+
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function applySettings() {
+    gameSettings.musicVolume = parseInt(document.getElementById('inputMusicVol').value) / 100;
+    gameSettings.sfxVolume = parseInt(document.getElementById('inputSfxVol').value) / 100;
+    gameSettings.speed = parseInt(document.getElementById('inputSpeed').value);
+    gameSettings.difficulty = document.getElementById('inputDiff').value;
+
+    // Apply music volume instantly if it's currently playing
+    if (currentMusicGainNode) {
+        currentMusicGainNode.gain.value = gameSettings.musicVolume;
+    }
+
+    localStorage.setItem('tetoSettings', JSON.stringify(gameSettings));
+    
+    document.getElementById('settingsModal').style.display = 'none';
+    spawnFloatText("⚙️ Settings Saved!", window.innerWidth / 2, 100);
+}
+
+// ══════════════════════════════════════════
+//  SYNTHESIZED SOUND EFFECTS (Web Audio API)
+// ══════════════════════════════════════════
+const sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    if (sfxCtx.state === 'suspended') sfxCtx.resume();
+    if (gameSettings.sfxVolume <= 0) return; // Mute check
+    
+    const osc = sfxCtx.createOscillator();
+    const gainNode = sfxCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(sfxCtx.destination);
+    
+    const now = sfxCtx.currentTime;
+    const vol = gameSettings.sfxVolume; // Apply universal SFX volume multiplier
+    
+    if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+        gainNode.gain.setValueAtTime(0.1 * vol, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } 
+    else if (type === 'buy') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.setValueAtTime(600, now + 0.1);
+        gainNode.gain.setValueAtTime(0.1 * vol, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } 
+    else if (type === 'error') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+        gainNode.gain.setValueAtTime(0.1 * vol, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } 
+    else if (type === 'minigame') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.3);
+        gainNode.gain.setValueAtTime(0.05 * vol, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+    else if (type === 'prestige') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.2);
+        osc.frequency.linearRampToValueAtTime(1200, now + 0.4);
+        osc.frequency.linearRampToValueAtTime(1600, now + 0.6);
+        osc.frequency.linearRampToValueAtTime(2000, now + 0.8);
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.15 * vol, now + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, now + 1.5);
+        osc.start(now);
+        osc.stop(now + 1.5);
+    }
+}
+
+// ══════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════
+const state = {
+    tetos: 0,
+    totalTetos: 0,
+    totalClicks: 0,
+    tps: 0,
+    tpc: 1,
+    minigameHighScore: 0,
+    tetoTokens: 0,
+    permMultiplier: 1
+};
+
+const upgrades = [
+    { id:'cursor',   name:'Bread',        icon:'<img src="images/Bread.png" alt="Bread">', desc:'Auto-clicks once per second.',        baseCost:15,    tps:0.1,  tpc:0,  count:0 },
+    { id:'fan',      name:'Miku',         icon:'<img src="images/Miku.png" alt="Miku">',   desc:'A devoted fan generates Tetos.',        baseCost:100,   tps:0.5,  tpc:0,  count:0 },
+    { id:'bakery',   name:'Pear',         icon:'<img src="images/pear.png" alt="Pear">',   desc:'Bread for Teto, Tetos for you.',        baseCost:500,   tps:2,    tpc:0,  count:0 },
+    { id:'concert',  name:'Mini Concert', icon:'🎵',                                       desc:'Teto performs, crowd goes wild.',       baseCost:2000,  tps:8,    tpc:0,  count:0 },
+    { id:'studio',   name:'Recording Studio',icon:'🎙️',                                    desc:'Hit singles = infinite Tetos.',         baseCost:8000,  tps:25,   tpc:0,  count:0 },
+    { id:'tour',     name:'World Tour',   icon:'✈️',                                       desc:'Teto goes global!',                     baseCost:30000, tps:80,   tpc:0,  count:0 },
+    { id:'claws',    name:'Sharp Claws',  icon:'💅',                                       desc:'+1 Teto per click.',                    baseCost:50,    tps:0,    tpc:1,  count:0 },
+    { id:'charm',    name:'Teto Charm',   icon:'💎',                                       desc:'+5 Tetos per click.',                   baseCost:300,   tps:0,    tpc:5,  count:0 },
+    { id:'wings',    name:'Bread Wings',  icon:'🪽',                                       desc:'+15 Tetos per click.',                  baseCost:1500,  tps:0,    tpc:15, count:0 },
+];
+
+const permUpgrades = [
+    { id:'perm1', name:'+10% All Production', icon:'👑', desc:'Permanently boosts TPS & TPC.', baseCost:10, effect:0.10, count:0 }
+];
+
+function getCost(upg) { return Math.floor(upg.baseCost * Math.pow(1.15, upg.count)); }
+
+function renderUpgrades() {
+    const list = document.getElementById('upgradeList');
+    list.innerHTML = '';
+    upgrades.forEach(upg => {
+        const cost = getCost(upg);
+        const canAfford = state.tetos >= cost;
+        const div = document.createElement('div');
+        div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+        div.innerHTML = `
+            <div class="upgrade-icon">${upg.icon}</div>
+            <div>
+                <div class="upgrade-name">${upg.name} <span style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
+                <div class="upgrade-desc">${upg.desc}</div>
+                <div class="upgrade-cost">🥖 ${formatNum(cost)}</div>
+            </div>
+        `;
+        if (canAfford) div.addEventListener('click', () => buyUpgrade(upg));
+        else div.addEventListener('click', () => playSound('error'));
+        list.appendChild(div);
+    });
+}
+
+function renderPermUpgrades() {
+    const list = document.getElementById('permUpgradeList');
+    list.innerHTML = '';
+    permUpgrades.forEach(upg => {
+        const cost = upg.baseCost + (upg.count * 10);
+        const canAfford = state.tetoTokens >= cost;
+        const div = document.createElement('div');
+        div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+        div.innerHTML = `
+            <div class="upgrade-icon">${upg.icon}</div>
+            <div>
+                <div class="upgrade-name">${upg.name} <span style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
+                <div class="upgrade-desc">${upg.desc}</div>
+                <div class="upgrade-cost" style="color:white;">✨ ${formatNum(cost)} Tokens</div>
+            </div>
+        `;
+        if (canAfford) div.addEventListener('click', () => buyPermUpgrade(upg, cost));
+        else div.addEventListener('click', () => playSound('error'));
+        list.appendChild(div);
+    });
+}
+
+function buyUpgrade(upg) {
+    const cost = getCost(upg);
+    if (state.tetos < cost) return;
+    playSound('buy');
+    state.tetos -= cost;
+    upg.count++;
+    recalcTPS();
+    renderUpgrades();
+    
+    const floatText = upg.icon.includes('<img') ? `+${upg.name}` : `+${upg.icon}`;
+    spawnFloatText(floatText, window.innerWidth / 2, window.innerHeight / 2 - 100);
+}
+
+function buyPermUpgrade(upg, cost) {
+    if (state.tetoTokens < cost) return;
+    playSound('buy');
+    state.tetoTokens -= cost;
+    upg.count++;
+    
+    state.permMultiplier = 1 + permUpgrades.reduce((acc, u) => acc + (u.effect * u.count), 0);
+    
+    recalcTPS();
+    renderPermUpgrades();
+    updateDisplay();
+    saveGame();
+}
+
+function recalcTPS() {
+    let baseTps = upgrades.reduce((acc, u) => acc + u.tps * u.count, 0);
+    let baseTpc = 1 + upgrades.reduce((acc, u) => acc + u.tpc * u.count, 0);
+
+    state.tps = baseTps * state.permMultiplier;
+    state.tpc = baseTpc * state.permMultiplier;
+
+    document.getElementById('statTPS').textContent = formatNum(Math.round(state.tps * 10) / 10);
+    document.getElementById('statTPC').textContent = formatNum(Math.round(state.tpc * 10) / 10);
+    document.getElementById('tpsLabel').textContent = `Teto Power: ${formatNum(Math.round(state.tps * 10) / 10)} / sec`;
+    
+    const pct = Math.min(100, (state.tps / 100) * 100);
+    document.getElementById('tpsFill').style.width = pct + '%';
+}
+
+function formatNum(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return Math.floor(n).toString();
+}
+
+function updateDisplay() {
+    document.getElementById('tetoNumberDisplay').textContent = formatNum(Math.floor(state.tetos));
+    document.getElementById('statTotal').textContent = formatNum(Math.floor(state.totalTetos));
+    document.getElementById('statMinigame').textContent = state.minigameHighScore;
+    document.getElementById('statTokens').textContent = state.tetoTokens;
+
+    const gain = Math.floor(state.tetos / 10000);
+    document.getElementById('prestigeGain').textContent = formatNum(gain);
+    document.getElementById('prestigeBtn').disabled = gain < 1;
+}
+
+// ══════════════════════════════════════════
+//  PRESTIGE SYSTEM
+// ══════════════════════════════════════════
+function doPrestige() {
+    const gain = Math.floor(state.tetos / 10000);
+    if (gain < 1) {
+        playSound('error');
+        return;
+    }
+
+    playSound('prestige');
+
+    const flash = document.getElementById('prestigeFlash');
+    flash.style.display = 'flex';
+    setTimeout(() => { flash.style.display = 'none'; }, 1500);
+
+    state.tetoTokens += gain;
+    state.tetos = 0;
+    
+    upgrades.forEach(upg => upg.count = 0);
+    
+    recalcTPS();
+    renderUpgrades();
+    renderPermUpgrades();
+    updateDisplay();
+    saveGame();
+}
+
+// ══════════════════════════════════════════
+//  CLICK HANDLER
+// ══════════════════════════════════════════
+const mainTeto = document.getElementById('mainTeto');
+mainTeto.addEventListener('click', (e) => {
+    playSound('click');
+    state.tetos += state.tpc;
+    state.totalTetos += state.tpc;
+    state.totalClicks++;
+    
+    updateDisplay();
+    renderUpgrades();
+
+    mainTeto.classList.remove('clicked');
+    void mainTeto.offsetWidth;
+    mainTeto.classList.add('clicked');
+
+    spawnFloatText(`+${formatNum(Math.round(state.tpc * 10)/10)}`, e.clientX, e.clientY);
+    spawnClickParticles(e.clientX, e.clientY);
+});
+
+// ══════════════════════════════════════════
+//  GAME LOOP (TPS)
+// ══════════════════════════════════════════
+let lastTime = 0;
+function gameLoop(ts) {
+    const dt = (ts - lastTime) / 1000;
+    lastTime = ts;
+    if (dt < 0.5) { 
+        const gained = state.tps * dt;
+        state.tetos += gained;
+        state.totalTetos += gained;
+        updateDisplay();
+    }
+    requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+// ══════════════════════════════════════════
+//  EASTER EGG (DEV ADMIN PANEL)
+// ══════════════════════════════════════════
+let secretBuffer = "";
+const secretCode = "setsoku";
+
+document.addEventListener('keydown', (e) => {
+    if (e.key.length === 1) {
+        secretBuffer += e.key.toLowerCase();
+        if (secretBuffer.length > secretCode.length) {
+            secretBuffer = secretBuffer.slice(-secretCode.length);
+        }
+        if (secretBuffer === secretCode) {
+            openAdminPanel();
+            secretBuffer = ""; 
+        }
+    }
+});
+
+function openAdminPanel() {
+    playSound('prestige'); 
+    document.getElementById('adminTetosInput').value = Math.floor(state.tetos);
+    document.getElementById('adminTokensInput').value = state.tetoTokens;
+    document.getElementById('adminModal').style.display = 'flex';
+}
+
+function applyAdminChanges() {
+    const newTetos = parseFloat(document.getElementById('adminTetosInput').value);
+    const newTokens = parseFloat(document.getElementById('adminTokensInput').value);
+    
+    if (!isNaN(newTetos)) {
+        state.tetos = newTetos;
+        if (newTetos > state.totalTetos) state.totalTetos = newTetos; 
+    }
+    if (!isNaN(newTokens)) state.tetoTokens = newTokens;
+    
+    playSound('buy');
+    updateDisplay();
+    renderUpgrades();
+    renderPermUpgrades();
+    
+    document.getElementById('adminModal').style.display = 'none';
+    spawnFloatText("⚙️ Dev Hacks Applied!", window.innerWidth / 2, 100);
+    saveGame();
+}
+
+// ══════════════════════════════════════════
+//  SAVE / LOAD SYSTEM
+// ══════════════════════════════════════════
+function saveGame() {
+    const save = {
+        state: state,
+        upgrades: upgrades.map(u => u.count),
+        permUpgrades: permUpgrades.map(u => u.count)
+    };
+    localStorage.setItem('tetoSaveData', JSON.stringify(save));
+    spawnFloatText("Saved!", window.innerWidth / 2, 80);
+}
+
+function loadGame() {
+    const savedString = localStorage.getItem('tetoSaveData');
+    if (!savedString) return;
+    
+    const save = JSON.parse(savedString);
+    Object.assign(state, save.state);
+    
+    save.upgrades.forEach((val, i) => upgrades[i].count = val);
+    save.permUpgrades.forEach((val, i) => permUpgrades[i].count = val);
+    
+    recalcTPS();
+    renderUpgrades();
+    renderPermUpgrades();
+    updateDisplay();
+    spawnFloatText("Loaded!", window.innerWidth / 2, 80);
+}
+
+function resetGame() {
+    if(confirm("Are you sure? This will wipe EVERYTHING, including Prestige tokens!")) {
+        localStorage.removeItem('tetoSaveData');
+        localStorage.removeItem('tetoSettings');
+        location.reload();
+    }
+}
+
+// ══════════════════════════════════════════
+//  VISUAL EFFECTS
+// ══════════════════════════════════════════
+function spawnFloatText(text, x, y) {
+    const el = document.createElement('div');
+    el.className = 'float-text';
+    el.textContent = text;
+    el.style.left = (x - 30) + 'px';
+    el.style.top = (y - 30) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+}
+
+const tetoCanvas = document.getElementById('tetoCanvas');
+const tCtx = tetoCanvas.getContext('2d');
+const pCanvas = document.getElementById('particleCanvas');
+const pCtx = pCanvas.getContext('2d');
+
+function resizeCanvas() {
+    tetoCanvas.width = pCanvas.width = window.innerWidth;
+    tetoCanvas.height = pCanvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const tetoImg = new Image();
+tetoImg.src = 'images/tetoclick.png';
+
+let fallingTetos = [];
+let particles = [];
+
+function drawCanvas() {
+    tCtx.clearRect(0, 0, tetoCanvas.width, tetoCanvas.height);
+    const spawnChance = Math.min(0.08, state.tps * 0.002 + 0.005);
+    
+    if (Math.random() < spawnChance && fallingTetos.length < Math.min(20, Math.floor(state.tps / 5) + 1)) {
+        fallingTetos.push({
+            x: Math.random() * window.innerWidth, y: -80,
+            size: 45 + Math.random() * 45, speed: 0.6 + Math.random() * 1.2, 
+            rotate: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.02,
+            opacity: 0.12 + Math.random() * 0.18, drift: (Math.random() - 0.5) * 0.3
+        });
+    }
+
+    fallingTetos = fallingTetos.filter(t => t.y < tetoCanvas.height + 100);
+    fallingTetos.forEach(t => {
+        t.y += t.speed; t.x += t.drift; t.rotate += t.rotSpeed;
+        tCtx.save(); tCtx.globalAlpha = t.opacity; tCtx.translate(t.x, t.y); tCtx.rotate(t.rotate);
+        tCtx.drawImage(tetoImg, -t.size / 2, -t.size / 2, t.size, t.size); tCtx.restore();
+    });
+
+    pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= p.decay; p.rotate += p.rotSpeed;
+        pCtx.save(); pCtx.globalAlpha = Math.max(0, p.life); pCtx.translate(p.x, p.y); pCtx.rotate(p.rotate);
+        pCtx.drawImage(tetoImg, -p.size / 2, -p.size / 2, p.size, p.size); pCtx.restore();
+    });
+
+    requestAnimationFrame(drawCanvas);
+}
+tetoImg.onload = () => drawCanvas();
+
+function spawnClickParticles(cx, cy) {
+    const count = Math.min(5 + Math.floor(state.tpc / 5), 12);
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+        const speed = 3 + Math.random() * 5; 
+        particles.push({
+            x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+            size: 30 + Math.random() * 30, life: 1, decay: 0.04 + Math.random() * 0.04, 
+            rotate: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15
+        });
+    }
+}
+
+// ══════════════════════════════════════════
+//  MINIGAME SYSTEM
+// ══════════════════════════════════════════
+document.getElementById('minigameBtn').addEventListener('click', () => {
+    const cost = Math.floor(state.tetos * 0.2);
+    if(state.tetos < cost) {
+        playSound('error');
+        return;
+    }
+    
+    playSound('minigame');
+    state.tetos -= cost;
+    updateDisplay();
+    spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
+
+    document.getElementById('minigameFrame').src = 'minigame.html';
+    document.getElementById('minigameModal').classList.add('open');
+});
+
+document.getElementById('closeMinigame').addEventListener('click', () => {
+    document.getElementById('minigameModal').classList.remove('open');
+    document.getElementById('minigameFrame').src = 'about:blank'; 
+});
+
+window.addEventListener('message', (e) => {
+    if (e.data?.type === 'minigameScore') {
+        
+        playSound('prestige'); 
+
+        const bonus = e.data.score * 10 * state.permMultiplier;
+        state.tetos += bonus;
+        state.totalTetos += bonus;
+        if (e.data.score > state.minigameHighScore) state.minigameHighScore = e.data.score;
+
+        document.getElementById('minigameModal').classList.remove('open');
+        document.getElementById('minigameFrame').src = 'about:blank'; 
+        updateDisplay();
+        
+        spawnFloatText(`+${formatNum(bonus)} BONUS!`, window.innerWidth / 2, window.innerHeight / 2);
+        saveGame();
+    }
+});
+
+// ══════════════════════════════════════════
+//  BACKGROUND MUSIC SYSTEM
+// ══════════════════════════════════════════
+let musicStarted = false;
+document.body.addEventListener('click', async () => {
+    if (musicStarted) return;
+    musicStarted = true;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        const response = await fetch('soundtrack.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = true; 
+        
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = gameSettings.musicVolume; // Uses universal volume setup in Settings
+        currentMusicGainNode = gainNode; // Cache for live volume adjustments
+
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        source.start(0);
+    } catch (error) {
+        console.error("Failed to load seamless music:", error);
+        musicStarted = false; 
+    }
+});
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+loadSettings(); // MUST run before loading visual text
+renderUpgrades();
+renderPermUpgrades();
+updateDisplay();
+recalcTPS();
+setInterval(() => { renderUpgrades(); renderPermUpgrades(); }, 500);
+
+// Auto-load on open
+window.addEventListener('DOMContentLoaded', loadGame);
+
+</script>
 </body>
 </html>
