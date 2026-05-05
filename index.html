@@ -237,7 +237,7 @@
         .upgrade-desc { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.3; margin-bottom: 4px; }
         .upgrade-cost { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--pink); } 
 
-        /* ── Modals (Settings & Admin) ── */
+        /* ── Modals (Settings, Admin, Save) ── */
         .modal-bg {
             display: none; 
             position: fixed; inset: 0; z-index: 3000;
@@ -268,7 +268,7 @@
             width: 100%;
             cursor: pointer;
         }
-        .modal-input-group input[type="number"], .modal-input-group select {
+        .modal-input-group input[type="number"], .modal-input-group select, .modal-input-group input[type="text"] {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
@@ -372,8 +372,8 @@
         </button>
         
         <div style="display: flex; gap: 8px; margin-top: 14px;">
-            <button class="btn btn-small" onclick="saveGame()">Save</button>
-            <button class="btn btn-small" onclick="loadGame()">Load</button>
+            <button class="btn btn-small" onclick="openSaveModal('export')">Save</button>
+            <button class="btn btn-small" onclick="openSaveModal('import')">Load</button>
             <button class="btn btn-small" onclick="resetGame()" style="background: rgba(200,0,0,0.3);">Reset</button>
         </div>
 
@@ -400,7 +400,7 @@
 
         <button class="btn" id="minigameBtn">
             🥖 Play Baguette Mania<br>
-            <span style="font-size: 0.85rem; opacity: 0.8; display: block; margin-top: 6px;">Costs 20% of your current Tetos</span>
+            <span style="font-size: 0.85rem; opacity: 0.8; display: block; margin-top: 6px;">Costs 20% Tetos (Min 10) | Earn up to 30%-50%</span>
         </button>
     </div>
 
@@ -413,8 +413,23 @@
     </div>
 </div>
 
-<div id="settingsModal" class="modal-bg">
+<div id="saveLoadModal" class="modal-bg">
     <div class="modal-panel">
+        <h2 style="color: var(--pink); font-family: 'Fredoka One', cursive; margin-bottom: 10px; font-size: 2rem;">💾 Save / Load</h2>
+        <p style="margin-bottom: 20px; color: rgba(255,255,255,0.7); font-size: 0.95rem;">Copy your code to back up your progress, or paste a code below to load a save file!</p>
+        
+        <textarea id="saveCodeInput" spellcheck="false" placeholder="Paste your save code here..." style="width: 100%; height: 120px; background: rgba(0,0,0,0.6); color: var(--pink); border: 2px solid var(--red); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px; resize: none;"></textarea>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button class="btn btn-small" onclick="exportSave()" style="background: var(--highlight-color); color: white;">Copy Code</button>
+            <button class="btn btn-small" onclick="importSave()" style="background: #5cf68b; border-color: #00ffcc; color: #1a0a0e;">Load Code</button>
+            <button class="btn btn-small" onclick="document.getElementById('saveLoadModal').style.display='none'" style="background: transparent;">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal-bg">
+    <div class="modal-panel" style="width: 500px;">
         <h2 style="color: var(--pink); font-family: 'Fredoka One', cursive; margin-bottom: 20px; font-size: 2rem;">⚙️ Settings</h2>
         
         <div class="modal-input-group">
@@ -427,26 +442,39 @@
             <input type="range" id="inputSfxVol" min="0" max="100" value="100" oninput="document.getElementById('sfxVolDisp').innerText=this.value">
         </div>
 
-        <div class="modal-input-group">
-            <label>Minigame Scroll Speed</label>
-            <select id="inputSpeed">
-                <option value="2500">Slow</option>
-                <option value="1500" selected>Normal</option>
-                <option value="1000">Fast</option>
-                <option value="600">Insane</option>
-            </select>
+        <div style="display: flex; gap: 15px;">
+            <div class="modal-input-group" style="flex:1;">
+                <label>Scroll Speed (<span id="speedDisp">15</span>)</label>
+                <input type="range" id="inputSpeed" min="0" max="30" step="1" value="15" oninput="document.getElementById('speedDisp').innerText=this.value">
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between; margin-top: 4px;">
+                    <span>Slow (0)</span>
+                    <span>Fast (30)</span>
+                </div>
+            </div>
+
+            <div class="modal-input-group" style="flex:1;">
+                <label>Difficulty</label>
+                <select id="inputDiff">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
         </div>
 
         <div class="modal-input-group">
-            <label>Minigame Difficulty</label>
-            <select id="inputDiff">
-                <option value="easy">Easy</option>
-                <option value="normal" selected>Normal</option>
-                <option value="hard">Hard</option>
-            </select>
+            <label>Minigame Controls (4 Keys + Restart)</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="inputKey0" maxlength="1" style="text-align: center; text-transform: uppercase;">
+                <input type="text" id="inputKey1" maxlength="1" style="text-align: center; text-transform: uppercase;">
+                <input type="text" id="inputKey2" maxlength="1" style="text-align: center; text-transform: uppercase;">
+                <input type="text" id="inputKey3" maxlength="1" style="text-align: center; text-transform: uppercase;">
+                <span style="color:var(--pink); font-weight:bold; margin-left:5px;">|</span>
+                <input type="text" id="inputKeyReset" maxlength="1" style="text-align: center; text-transform: uppercase; background:rgba(232,51,74,0.3);" title="Restart Game Key">
+            </div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="btn btn-small" onclick="applySettings()" style="background: var(--highlight-color); color: white;">Save Changes</button>
             <button class="btn btn-small" onclick="document.getElementById('settingsModal').style.display='none'" style="background: transparent;">Cancel</button>
         </div>
@@ -490,17 +518,24 @@
 let gameSettings = {
     musicVolume: 0.4,
     sfxVolume: 1.0,
-    speed: 1500, // 1500ms fall duration (normal)
-    difficulty: 'normal'
+    speed: 15, 
+    difficulty: 'normal',
+    keys: ['d', 'f', 'j', 'k'],
+    resetKey: 'r'
 };
 
-let currentMusicGainNode = null; // Used to update music volume live
+let currentMusicGainNode = null; 
 
 function loadSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem('tetoSettings'));
         if (saved) {
             gameSettings = Object.assign(gameSettings, saved);
+            if (!gameSettings.keys || gameSettings.keys.length !== 4) {
+                gameSettings.keys = ['d', 'f', 'j', 'k']; 
+            }
+            if (!gameSettings.resetKey) gameSettings.resetKey = 'r';
+            if (gameSettings.speed > 30) gameSettings.speed = 15; 
         }
     } catch(e) {}
 }
@@ -512,8 +547,16 @@ function openSettingsPanel() {
     document.getElementById('inputSfxVol').value = gameSettings.sfxVolume * 100;
     document.getElementById('sfxVolDisp').innerText = Math.round(gameSettings.sfxVolume * 100);
     
-    document.getElementById('inputSpeed').value = gameSettings.speed.toString();
+    document.getElementById('inputSpeed').value = gameSettings.speed;
+    document.getElementById('speedDisp').innerText = gameSettings.speed;
+    
     document.getElementById('inputDiff').value = gameSettings.difficulty;
+
+    document.getElementById('inputKey0').value = gameSettings.keys[0];
+    document.getElementById('inputKey1').value = gameSettings.keys[1];
+    document.getElementById('inputKey2').value = gameSettings.keys[2];
+    document.getElementById('inputKey3').value = gameSettings.keys[3];
+    document.getElementById('inputKeyReset').value = gameSettings.resetKey;
 
     document.getElementById('settingsModal').style.display = 'flex';
 }
@@ -521,10 +564,16 @@ function openSettingsPanel() {
 function applySettings() {
     gameSettings.musicVolume = parseInt(document.getElementById('inputMusicVol').value) / 100;
     gameSettings.sfxVolume = parseInt(document.getElementById('inputSfxVol').value) / 100;
+    
     gameSettings.speed = parseInt(document.getElementById('inputSpeed').value);
     gameSettings.difficulty = document.getElementById('inputDiff').value;
 
-    // Apply music volume instantly if it's currently playing
+    gameSettings.keys[0] = document.getElementById('inputKey0').value.toLowerCase() || 'd';
+    gameSettings.keys[1] = document.getElementById('inputKey1').value.toLowerCase() || 'f';
+    gameSettings.keys[2] = document.getElementById('inputKey2').value.toLowerCase() || 'j';
+    gameSettings.keys[3] = document.getElementById('inputKey3').value.toLowerCase() || 'k';
+    gameSettings.resetKey = document.getElementById('inputKeyReset').value.toLowerCase() || 'r';
+
     if (currentMusicGainNode) {
         currentMusicGainNode.gain.value = gameSettings.musicVolume;
     }
@@ -542,7 +591,7 @@ const sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
     if (sfxCtx.state === 'suspended') sfxCtx.resume();
-    if (gameSettings.sfxVolume <= 0) return; // Mute check
+    if (gameSettings.sfxVolume <= 0) return; 
     
     const osc = sfxCtx.createOscillator();
     const gainNode = sfxCtx.createGain();
@@ -550,7 +599,7 @@ function playSound(type) {
     gainNode.connect(sfxCtx.destination);
     
     const now = sfxCtx.currentTime;
-    const vol = gameSettings.sfxVolume; // Apply universal SFX volume multiplier
+    const vol = gameSettings.sfxVolume; 
     
     if (type === 'click') {
         osc.type = 'sine';
@@ -604,7 +653,7 @@ function playSound(type) {
 }
 
 // ══════════════════════════════════════════
-//  GAME STATE
+//  GAME STATE & UPGRADES INIT
 // ══════════════════════════════════════════
 const state = {
     tetos: 0,
@@ -621,7 +670,7 @@ const upgrades = [
     { id:'cursor',   name:'Bread',        icon:'<img src="images/Bread.png" alt="Bread">', desc:'Auto-clicks once per second.',        baseCost:15,    tps:0.1,  tpc:0,  count:0 },
     { id:'fan',      name:'Miku',         icon:'<img src="images/Miku.png" alt="Miku">',   desc:'A devoted fan generates Tetos.',        baseCost:100,   tps:0.5,  tpc:0,  count:0 },
     { id:'bakery',   name:'Pear',         icon:'<img src="images/pear.png" alt="Pear">',   desc:'Bread for Teto, Tetos for you.',        baseCost:500,   tps:2,    tpc:0,  count:0 },
-    { id:'concert',  name:'Mini Concert', icon:'🎵',                                       desc:'Teto performs, crowd goes wild.',       baseCost:2000,  tps:8,    tpc:0,  count:0 },
+    { id:'concert',  name:'Mini Concert', icon:'🎵',                                       desc:'Teto performs! (+2% Minigame Yield)',   baseCost:2000,  tps:8,    tpc:0,  count:0 },
     { id:'studio',   name:'Recording Studio',icon:'🎙️',                                    desc:'Hit singles = infinite Tetos.',         baseCost:8000,  tps:25,   tpc:0,  count:0 },
     { id:'tour',     name:'World Tour',   icon:'✈️',                                       desc:'Teto goes global!',                     baseCost:30000, tps:80,   tpc:0,  count:0 },
     { id:'claws',    name:'Sharp Claws',  icon:'💅',                                       desc:'+1 Teto per click.',                    baseCost:50,    tps:0,    tpc:1,  count:0 },
@@ -635,47 +684,84 @@ const permUpgrades = [
 
 function getCost(upg) { return Math.floor(upg.baseCost * Math.pow(1.15, upg.count)); }
 
-function renderUpgrades() {
+function initUpgrades() {
     const list = document.getElementById('upgradeList');
     list.innerHTML = '';
-    upgrades.forEach(upg => {
-        const cost = getCost(upg);
-        const canAfford = state.tetos >= cost;
+    upgrades.forEach((upg, i) => {
         const div = document.createElement('div');
-        div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+        div.id = `upg-${i}`;
+        div.className = 'upgrade-item locked';
         div.innerHTML = `
             <div class="upgrade-icon">${upg.icon}</div>
             <div>
-                <div class="upgrade-name">${upg.name} <span style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
+                <div class="upgrade-name">${upg.name} <span id="upg-count-${i}" style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
                 <div class="upgrade-desc">${upg.desc}</div>
-                <div class="upgrade-cost">🥖 ${formatNum(cost)}</div>
+                <div class="upgrade-cost" id="upg-cost-${i}">🥖 ${formatNum(getCost(upg))}</div>
             </div>
         `;
-        if (canAfford) div.addEventListener('click', () => buyUpgrade(upg));
-        else div.addEventListener('click', () => playSound('error'));
+        div.addEventListener('click', () => {
+            if (state.tetos >= getCost(upg)) buyUpgrade(upg);
+            else playSound('error');
+        });
         list.appendChild(div);
     });
 }
 
-function renderPermUpgrades() {
+function initPermUpgrades() {
     const list = document.getElementById('permUpgradeList');
     list.innerHTML = '';
-    permUpgrades.forEach(upg => {
-        const cost = upg.baseCost + (upg.count * 10);
-        const canAfford = state.tetoTokens >= cost;
+    permUpgrades.forEach((upg, i) => {
         const div = document.createElement('div');
-        div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+        div.id = `perm-${i}`;
+        div.className = 'upgrade-item locked';
+        const cost = upg.baseCost + (upg.count * 10);
         div.innerHTML = `
             <div class="upgrade-icon">${upg.icon}</div>
             <div>
-                <div class="upgrade-name">${upg.name} <span style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
+                <div class="upgrade-name">${upg.name} <span id="perm-count-${i}" style="color:rgba(255,255,255,0.5);font-size:0.9rem;">(×${upg.count})</span></div>
                 <div class="upgrade-desc">${upg.desc}</div>
-                <div class="upgrade-cost" style="color:white;">✨ ${formatNum(cost)} Tokens</div>
+                <div class="upgrade-cost" id="perm-cost-${i}" style="color:white;">✨ ${formatNum(cost)} Tokens</div>
             </div>
         `;
-        if (canAfford) div.addEventListener('click', () => buyPermUpgrade(upg, cost));
-        else div.addEventListener('click', () => playSound('error'));
+        div.addEventListener('click', () => {
+            const currentCost = upg.baseCost + (upg.count * 10);
+            if (state.tetoTokens >= currentCost) buyPermUpgrade(upg, currentCost);
+            else playSound('error');
+        });
         list.appendChild(div);
+    });
+}
+
+function updateUpgrades() {
+    upgrades.forEach((upg, i) => {
+        const cost = getCost(upg);
+        const canAfford = state.tetos >= cost;
+        const div = document.getElementById(`upg-${i}`);
+        if (div) {
+            div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+            document.getElementById(`upg-count-${i}`).innerText = `(×${upg.count})`;
+            document.getElementById(`upg-cost-${i}`).innerText = `🥖 ${formatNum(cost)}`;
+        }
+    });
+
+    // Dynamically update the Minigame Button to show the currently boosted payout potentials!
+    const concertCount = upgrades.find(u => u.id === 'concert').count;
+    const mgBtnSpan = document.querySelector('#minigameBtn span');
+    if (mgBtnSpan) {
+        mgBtnSpan.innerText = `Costs 20% Tetos (Min 10) | Earn up to ${30 + concertCount * 2}%-${50 + concertCount * 2}%`;
+    }
+}
+
+function updatePermUpgrades() {
+    permUpgrades.forEach((upg, i) => {
+        const cost = upg.baseCost + (upg.count * 10);
+        const canAfford = state.tetoTokens >= cost;
+        const div = document.getElementById(`perm-${i}`);
+        if (div) {
+            div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+            document.getElementById(`perm-count-${i}`).innerText = `(×${upg.count})`;
+            document.getElementById(`perm-cost-${i}`).innerText = `✨ ${formatNum(cost)} Tokens`;
+        }
     });
 }
 
@@ -686,7 +772,7 @@ function buyUpgrade(upg) {
     state.tetos -= cost;
     upg.count++;
     recalcTPS();
-    renderUpgrades();
+    updateUpgrades();
     
     const floatText = upg.icon.includes('<img') ? `+${upg.name}` : `+${upg.icon}`;
     spawnFloatText(floatText, window.innerWidth / 2, window.innerHeight / 2 - 100);
@@ -701,9 +787,9 @@ function buyPermUpgrade(upg, cost) {
     state.permMultiplier = 1 + permUpgrades.reduce((acc, u) => acc + (u.effect * u.count), 0);
     
     recalcTPS();
-    renderPermUpgrades();
+    updatePermUpgrades();
     updateDisplay();
-    saveGame();
+    saveLocalGame();
 }
 
 function recalcTPS() {
@@ -761,10 +847,10 @@ function doPrestige() {
     upgrades.forEach(upg => upg.count = 0);
     
     recalcTPS();
-    renderUpgrades();
-    renderPermUpgrades();
+    updateUpgrades();
+    updatePermUpgrades();
     updateDisplay();
-    saveGame();
+    saveLocalGame();
 }
 
 // ══════════════════════════════════════════
@@ -778,7 +864,7 @@ mainTeto.addEventListener('click', (e) => {
     state.totalClicks++;
     
     updateDisplay();
-    renderUpgrades();
+    updateUpgrades();
 
     mainTeto.classList.remove('clicked');
     void mainTeto.offsetWidth;
@@ -843,42 +929,98 @@ function applyAdminChanges() {
     
     playSound('buy');
     updateDisplay();
-    renderUpgrades();
-    renderPermUpgrades();
+    updateUpgrades();
+    updatePermUpgrades();
     
     document.getElementById('adminModal').style.display = 'none';
     spawnFloatText("⚙️ Dev Hacks Applied!", window.innerWidth / 2, 100);
-    saveGame();
+    saveLocalGame();
 }
 
 // ══════════════════════════════════════════
-//  SAVE / LOAD SYSTEM
+//  SAVE / LOAD SYSTEM (COOKIE CLICKER STYLE)
 // ══════════════════════════════════════════
-function saveGame() {
+function getSaveString() {
     const save = {
         state: state,
         upgrades: upgrades.map(u => u.count),
         permUpgrades: permUpgrades.map(u => u.count)
     };
-    localStorage.setItem('tetoSaveData', JSON.stringify(save));
-    spawnFloatText("Saved!", window.innerWidth / 2, 80);
+    return btoa(JSON.stringify(save));
 }
 
-function loadGame() {
+function applySaveString(str) {
+    try {
+        let save;
+        if (str.startsWith('{')) {
+            save = JSON.parse(str);
+        } else {
+            save = JSON.parse(atob(str));
+        }
+        
+        Object.assign(state, save.state);
+        save.upgrades.forEach((val, i) => upgrades[i].count = val);
+        save.permUpgrades.forEach((val, i) => permUpgrades[i].count = val);
+        
+        recalcTPS();
+        updateUpgrades();
+        updatePermUpgrades();
+        updateDisplay();
+        return true;
+    } catch (e) {
+        console.error("Save load error:", e);
+        return false;
+    }
+}
+
+function saveLocalGame() {
+    localStorage.setItem('tetoSaveData', getSaveString());
+}
+
+function loadLocalGame() {
     const savedString = localStorage.getItem('tetoSaveData');
-    if (!savedString) return;
+    if (savedString) {
+        applySaveString(savedString);
+    }
+}
+
+function openSaveModal(mode) {
+    const modal = document.getElementById('saveLoadModal');
+    const textarea = document.getElementById('saveCodeInput');
     
-    const save = JSON.parse(savedString);
-    Object.assign(state, save.state);
+    if (mode === 'export') {
+        textarea.value = getSaveString();
+        textarea.select();
+    } else {
+        textarea.value = '';
+    }
+    modal.style.display = 'flex';
+}
+
+function exportSave() {
+    const textarea = document.getElementById('saveCodeInput');
+    textarea.value = getSaveString();
+    textarea.select();
     
-    save.upgrades.forEach((val, i) => upgrades[i].count = val);
-    save.permUpgrades.forEach((val, i) => permUpgrades[i].count = val);
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        spawnFloatText("Code Copied!", window.innerWidth / 2, 80);
+    }).catch(err => {
+        spawnFloatText("Manual copy needed", window.innerWidth / 2, 80);
+    });
+}
+
+function importSave() {
+    const textarea = document.getElementById('saveCodeInput');
+    const success = applySaveString(textarea.value);
     
-    recalcTPS();
-    renderUpgrades();
-    renderPermUpgrades();
-    updateDisplay();
-    spawnFloatText("Loaded!", window.innerWidth / 2, 80);
+    if (success) {
+        spawnFloatText("Game Loaded!", window.innerWidth / 2, 80);
+        document.getElementById('saveLoadModal').style.display = 'none';
+        saveLocalGame(); 
+    } else {
+        playSound('error');
+        spawnFloatText("Invalid Code!", window.innerWidth / 2, 80);
+    }
 }
 
 function resetGame() {
@@ -953,7 +1095,7 @@ function drawCanvas() {
 tetoImg.onload = () => drawCanvas();
 
 function spawnClickParticles(cx, cy) {
-    const count = Math.min(5 + Math.floor(state.tpc / 5), 12);
+    const count = Math.min(10, 1 + Math.floor(state.tpc / 5)); 
     for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
         const speed = 3 + Math.random() * 5; 
@@ -963,15 +1105,22 @@ function spawnClickParticles(cx, cy) {
             rotate: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.15
         });
     }
+    
+    if (particles.length > 40) {
+        particles = particles.slice(-40);
+    }
 }
 
 // ══════════════════════════════════════════
-//  MINIGAME SYSTEM
+//  MINIGAME LAUNCHER
 // ══════════════════════════════════════════
 document.getElementById('minigameBtn').addEventListener('click', () => {
-    const cost = Math.floor(state.tetos * 0.2);
+    const minCost = 10;
+    const cost = Math.max(minCost, Math.floor(state.tetos * 0.2));
+    
     if(state.tetos < cost) {
         playSound('error');
+        spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50);
         return;
     }
     
@@ -980,8 +1129,22 @@ document.getElementById('minigameBtn').addEventListener('click', () => {
     updateDisplay();
     spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
 
-    document.getElementById('minigameFrame').src = 'minigame.html';
+    const concertUpg = upgrades.find(u => u.id === 'concert');
+    const concertCount = concertUpg ? concertUpg.count : 0;
+
+    localStorage.setItem('minigameContext', JSON.stringify({
+        wager: cost,
+        concertBoost: concertCount * 0.1
+    }));
+
+    const frame = document.getElementById('minigameFrame');
+    frame.src = 'minigame.html';
     document.getElementById('minigameModal').classList.add('open');
+
+    frame.onload = () => {
+        frame.focus();
+        if (frame.contentWindow) frame.contentWindow.focus();
+    };
 });
 
 document.getElementById('closeMinigame').addEventListener('click', () => {
@@ -994,7 +1157,7 @@ window.addEventListener('message', (e) => {
         
         playSound('prestige'); 
 
-        const bonus = e.data.score * 10 * state.permMultiplier;
+        const bonus = e.data.tetosEarned || 0;
         state.tetos += bonus;
         state.totalTetos += bonus;
         if (e.data.score > state.minigameHighScore) state.minigameHighScore = e.data.score;
@@ -1004,7 +1167,26 @@ window.addEventListener('message', (e) => {
         updateDisplay();
         
         spawnFloatText(`+${formatNum(bonus)} BONUS!`, window.innerWidth / 2, window.innerHeight / 2);
-        saveGame();
+        saveLocalGame();
+    } 
+    else if (e.data?.type === 'requestRetry') {
+        const minCost = 10;
+        const cost = Math.max(minCost, Math.floor(state.tetos * 0.2));
+        
+        if (state.tetos >= cost) {
+            state.tetos -= cost;
+            updateDisplay();
+            spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
+            saveLocalGame();
+            
+            const concertUpg = upgrades.find(u => u.id === 'concert');
+            const concertCount = concertUpg ? concertUpg.count : 0;
+            
+            document.getElementById('minigameFrame').contentWindow.postMessage({ type: 'retryApproved', wager: cost, concertBoost: concertCount * 0.1 }, '*');
+        } else {
+            playSound('error');
+            document.getElementById('minigameFrame').contentWindow.postMessage({ type: 'retryDenied' }, '*');
+        }
     }
 });
 
@@ -1026,8 +1208,8 @@ document.body.addEventListener('click', async () => {
         source.loop = true; 
         
         const gainNode = audioCtx.createGain();
-        gainNode.gain.value = gameSettings.musicVolume; // Uses universal volume setup in Settings
-        currentMusicGainNode = gainNode; // Cache for live volume adjustments
+        gainNode.gain.value = gameSettings.musicVolume; 
+        currentMusicGainNode = gainNode; 
 
         source.connect(gainNode);
         gainNode.connect(audioCtx.destination);
@@ -1041,15 +1223,17 @@ document.body.addEventListener('click', async () => {
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
-loadSettings(); // MUST run before loading visual text
-renderUpgrades();
-renderPermUpgrades();
+loadSettings(); 
+initUpgrades();
+initPermUpgrades();
+updateUpgrades();
+updatePermUpgrades();
 updateDisplay();
 recalcTPS();
-setInterval(() => { renderUpgrades(); renderPermUpgrades(); }, 500);
+setInterval(() => { updateUpgrades(); updatePermUpgrades(); }, 500);
 
 // Auto-load on open
-window.addEventListener('DOMContentLoaded', loadGame);
+window.addEventListener('DOMContentLoaded', loadLocalGame);
 
 </script>
 </body>
