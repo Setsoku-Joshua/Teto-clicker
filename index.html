@@ -21,7 +21,8 @@
 
         body {
             font-family: 'Nunito', sans-serif;
-            overflow: hidden;
+            /* FIX: Prevent the whole page from scrolling */
+            overflow: hidden; 
             height: 100vh;
             width: 100vw;
             background: #1a0a0e;
@@ -43,13 +44,28 @@
         }
         #particleCanvas { z-index: 15; }
 
-        /* ── Layout (Wider Panels) ── */
+        /* ── Layout (Responsive Grid) ── */
         #layout {
             position: relative; z-index: 10;
             display: grid;
             grid-template-columns: 340px 1fr 340px; 
-            height: 100vh;
+            height: 100vh; /* Locked to screen height */
             gap: 0;
+        }
+
+        @media (max-width: 1050px) {
+            #layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                overflow-y: auto; /* Revert to full page scroll on small mobile screens */
+            }
+            body { overflow-y: auto; }
+            .panel {
+                border-right: none !important;
+                border-left: none !important;
+                border-bottom: 1px solid var(--panel-border);
+                max-height: none !important;
+            }
         }
 
         /* ── Panels ── */
@@ -58,15 +74,22 @@
             backdrop-filter: blur(16px);
             border-right: 1px solid var(--panel-border);
             padding: 24px; 
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 14px; 
+            /* FIX: Independent Scrolling for the side panels */
+            overflow-y: auto;
+            max-height: 100vh;
         }
         .panel:last-child {
             border-right: none;
             border-left: 1px solid var(--panel-border);
         }
+
+        /* Custom Scrollbar for Panels */
+        .panel::-webkit-scrollbar { width: 6px; } 
+        .panel::-webkit-scrollbar-thumb { background: rgba(232,51,74,0.5); border-radius: 3px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
 
         .panel-title {
             font-family: 'Fredoka One', cursive;
@@ -77,7 +100,7 @@
             margin-bottom: 6px;
             text-align: center;
         }
-        
+
         /* ── Stats panel ── */
         .stat-box {
             background: rgba(232,51,74,0.18);
@@ -106,14 +129,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 20px; 
+            justify-content: flex-start;
+            gap: 16px; 
             position: relative;
+            padding: 4vh 10px 40px 10px; 
+            overflow-y: auto; /* Allows center to scroll if screen is too short vertically */
         }
+        #center::-webkit-scrollbar { width: 0px; } /* Hide center scrollbar */
 
         #tetoCount {
             font-family: 'Fredoka One', cursive;
-            font-size: 4.5rem; 
+            font-size: clamp(3rem, 5vw, 4.5rem); 
             color: white;
             text-shadow: 0 0 40px rgba(232,51,74,0.8), 0 4px 12px rgba(0,0,0,0.5);
             text-align: center;
@@ -136,11 +162,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
 
         #clickerGlow {
             position: absolute;
-            width: 340px; height: 340px; 
+            width: 100%; max-width: 340px; 
+            height: 340px; 
             border-radius: 50%;
             background: radial-gradient(circle, rgba(232,51,74,0.45) 0%, transparent 70%);
             animation: pulse 2s ease-in-out infinite;
@@ -154,6 +182,7 @@
         #mainTeto {
             position: relative;
             width: 280px; height: 280px; 
+            max-width: 80vw; max-height: 80vw;
             cursor: pointer;
             transition: transform 0.08s ease;
             filter: drop-shadow(0 12px 36px rgba(232,51,74,0.5));
@@ -188,7 +217,7 @@
             font-weight: bold;
         }
 
-        #tpsBar { width: 340px; text-align: center; } 
+        #tpsBar { width: 100%; max-width: 340px; text-align: center; } 
         #tpsLabel {
             font-size: 1rem; color: var(--pink); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; transition: color 0.3s;
         }
@@ -204,14 +233,15 @@
             color: white;
             font-family: 'Fredoka One', cursive;
             font-size: 1.3rem; 
-            padding: 14px 36px; 
+            padding: 14px 20px; 
             border-radius: 60px;
             cursor: pointer;
             letter-spacing: 1px;
             box-shadow: 0 4px 20px rgba(232,51,74,0.4);
             transition: all 0.2s ease;
             line-height: 1.2;
-            width: 360px;
+            width: 100%;
+            max-width: 360px;
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,51,74,0.6); }
         .btn:active { transform: translateY(0); }
@@ -223,6 +253,13 @@
             box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
         }
         .btn-green:hover { box-shadow: 0 8px 28px rgba(76, 175, 80, 0.6); }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #1a4a6e, #2a7aaa);
+            border-color: #4aacdd;
+            box-shadow: 0 4px 20px rgba(42, 122, 170, 0.4);
+        }
+        .btn-blue:hover { box-shadow: 0 8px 28px rgba(42, 122, 170, 0.6); }
 
         .btn-small {
             font-size: 1rem; padding: 10px 16px; border-radius: 12px; width: 100%; margin-top: 4px;
@@ -256,9 +293,7 @@
         }
         
         .upgrade-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: 100%; height: 100%; object-fit: cover;
         }
         .upgrade-name { font-weight: 800; font-size: 1.1rem; color: white; margin-bottom: 2px; } 
         .upgrade-desc { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.3; margin-bottom: 4px; }
@@ -266,64 +301,56 @@
 
         /* ── Modals ── */
         .modal-bg {
-            display: none; 
-            position: fixed; inset: 0; z-index: 3000;
+            display: none; position: fixed; inset: 0; z-index: 3000;
             background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px;
         }
         .modal-panel {
             background: rgba(26, 10, 14, 0.95);
             border: 3px solid var(--red-light);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(232,51,74,0.6);
-            backdrop-filter: blur(10px);
-            width: 450px;
-        }
-        .modal-input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .modal-input-group label {
-            display: block;
-            color: var(--pink);
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-        .modal-input-group input[type="range"] {
-            width: 100%;
-            cursor: pointer;
-        }
-        .modal-input-group input[type="number"], .modal-input-group select, .modal-input-group input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--red);
-            background: rgba(0,0,0,0.5);
-            color: white;
-            font-size: 1.1rem;
-            font-family: 'Fredoka One', cursive;
-        }
-
-        #prestigeFlash {
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh;
-            background: url('images/tetobg.jpg') center/cover no-repeat; 
-            z-index: 2000; 
-            justify-content: center; 
-            align-items: center;
-            animation: prestigeBgFade 1.5s ease-in-out forwards;
+            border-radius: 20px; padding: 30px 20px; text-align: center;
+            box-shadow: 0 0 50px rgba(232,51,74,0.6); backdrop-filter: blur(10px);
+            width: 100%; max-width: 500px; margin: auto;
         }
         
-        @keyframes prestigeBgFade {
-            0% { opacity: 0; }
-            10% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; }
+        /* ── Categorized Settings ── */
+        .settings-category {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
         }
+        .settings-category h3 {
+            color: var(--pink);
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        .modal-input-group { margin-bottom: 15px; text-align: left; }
+        .modal-input-group label { display: block; color: var(--cream); font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .modal-input-group input[type="range"] { width: 100%; cursor: pointer; }
+        .modal-input-group input[type="number"], .modal-input-group select, .modal-input-group input[type="text"] {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--red);
+            background: rgba(0,0,0,0.5); color: white; font-size: 1rem; font-family: 'Fredoka One', cursive;
+        }
+
+        .key-row { display: flex; gap: 8px; justify-content: flex-start; }
+        .key-row input { text-align: center; text-transform: uppercase; flex: 1; }
+
+        #prestigeFlash {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: url('images/tetobg.jpg') center/cover no-repeat; z-index: 2000; 
+            justify-content: center; align-items: center; animation: prestigeBgFade 1.5s ease-in-out forwards;
+        }
+        
+        @keyframes prestigeBgFade { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 
         @keyframes prestigeFlashAnim {
             0% { opacity: 0; transform: scale(0.7); filter: drop-shadow(0 0 10px #e8334a); }
@@ -339,12 +366,12 @@
         }
         #minigameModal.open { display: flex; }
         #minigameFrame {
-            width: min(900px, 95vw); height: min(650px, 90vh); border: 2px solid var(--red); 
+            width: min(900px, 95vw); height: min(750px, 90vh); border: 2px solid var(--red); 
             border-radius: 16px; box-shadow: 0 0 80px rgba(232,51,74,0.5); background: black;
         }
         #closeMinigame {
-            position: absolute; top: 20px; right: 24px; background: var(--red); border: none; color: white;
-            font-family: 'Fredoka One', cursive; font-size: 1.2rem; padding: 10px 24px; border-radius: 50px; cursor: pointer; z-index: 101;
+            position: absolute; top: 10px; right: 10px; background: var(--red); border: none; color: white;
+            font-family: 'Fredoka One', cursive; font-size: 1rem; padding: 10px 20px; border-radius: 50px; cursor: pointer; z-index: 101;
         }
 
         .float-text {
@@ -352,13 +379,7 @@
             text-shadow: 0 0 15px rgba(232,51,74,0.9); pointer-events: none; z-index: 50;
             animation: floatUp 0.9s ease forwards;
         }
-        @keyframes floatUp {
-            0%   { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(1.4); } 
-        }
-
-        .panel::-webkit-scrollbar { width: 6px; } 
-        .panel::-webkit-scrollbar-thumb { background: rgba(232,51,74,0.5); border-radius: 3px; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.4); } }
         
     </style>
 </head>
@@ -434,6 +455,11 @@
             🍐 Play Pear Shuffle<br>
             <span style="font-size: 0.85rem; opacity: 0.8; display: block; margin-top: 6px;">Costs 10% Tetos (Min 10) | Win 3x Wager</span>
         </button>
+
+        <button class="btn btn-blue" id="fishingMinigameBtn" style="display: none;">
+            🎣 Play Teto's Pond<br>
+            <span style="font-size: 0.85rem; opacity: 0.8; display: block; margin-top: 6px;">Costs 15% Tetos (Min 10) | Win up to 4x Wager</span>
+        </button>
     </div>
 
     <div class="panel">
@@ -461,32 +487,59 @@
 </div>
 
 <div id="settingsModal" class="modal-bg">
-    <div class="modal-panel" style="width: 500px;">
+    <div class="modal-panel">
         <h2 style="color: var(--pink); font-family: 'Fredoka One', cursive; margin-bottom: 20px; font-size: 2rem;">⚙️ Settings</h2>
         
-        <div class="modal-input-group">
-            <label>Music Volume (<span id="musicVolDisp">40</span>%)</label>
-            <input type="range" id="inputMusicVol" min="0" max="100" value="40" oninput="document.getElementById('musicVolDisp').innerText=this.value">
-        </div>
-        
-        <div class="modal-input-group">
-            <label>SFX Volume (<span id="sfxVolDisp">100</span>%)</label>
-            <input type="range" id="inputSfxVol" min="0" max="100" value="100" oninput="document.getElementById('sfxVolDisp').innerText=this.value">
-        </div>
-
-        <div style="display: flex; gap: 15px;">
-            <div class="modal-input-group" style="flex:1;">
-                <label>Scroll Speed (<span id="speedDisp">15</span>)</label>
-                <input type="range" id="inputSpeed" min="0" max="30" step="1" value="15" oninput="document.getElementById('speedDisp').innerText=this.value">
-                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between; margin-top: 4px;">
-                    <span>Slow (0)</span>
-                    <span>Fast (30)</span>
+        <div class="settings-category">
+            <h3>🎵 Audio Settings</h3>
+            <div style="display: flex; gap: 15px;">
+                <div class="modal-input-group" style="flex:1;">
+                    <label>Music (<span id="musicVolDisp">40</span>%)</label>
+                    <input type="range" id="inputMusicVol" min="0" max="100" value="40" oninput="document.getElementById('musicVolDisp').innerText=this.value">
+                </div>
+                <div class="modal-input-group" style="flex:1;">
+                    <label>SFX (<span id="sfxVolDisp">100</span>%)</label>
+                    <input type="range" id="inputSfxVol" min="0" max="100" value="100" oninput="document.getElementById('sfxVolDisp').innerText=this.value">
                 </div>
             </div>
+            <div class="modal-input-group" style="margin-bottom: 0;">
+                <label>Global Restart Keybind</label>
+                <input type="text" id="inputKeyReset" maxlength="1" style="text-align: center; text-transform: uppercase; max-width: 100px;">
+            </div>
+        </div>
 
-            <div class="modal-input-group" style="flex:1;">
+        <div class="settings-category">
+            <h3>🥖 Baguette Mania</h3>
+            <div style="display: flex; gap: 15px;">
+                <div class="modal-input-group" style="flex:1;">
+                    <label>Difficulty</label>
+                    <select id="inputBagDiff">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="modal-input-group" style="flex:1;">
+                    <label>Scroll Speed (<span id="speedDisp">15</span>)</label>
+                    <input type="range" id="inputBagSpeed" min="0" max="30" step="1" value="15" oninput="document.getElementById('speedDisp').innerText=this.value">
+                </div>
+            </div>
+            <div class="modal-input-group" style="margin-bottom: 0;">
+                <label>Keybinds (4 Lanes)</label>
+                <div class="key-row">
+                    <input type="text" id="inputBagKey0" maxlength="1">
+                    <input type="text" id="inputBagKey1" maxlength="1">
+                    <input type="text" id="inputBagKey2" maxlength="1">
+                    <input type="text" id="inputBagKey3" maxlength="1">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-category">
+            <h3>🍐 Pear Shuffle</h3>
+            <div class="modal-input-group" style="margin-bottom: 0;">
                 <label>Difficulty</label>
-                <select id="inputDiff">
+                <select id="inputPearDiff">
                     <option value="easy">Easy</option>
                     <option value="normal" selected>Normal</option>
                     <option value="hard">Hard</option>
@@ -494,19 +547,26 @@
             </div>
         </div>
 
-        <div class="modal-input-group">
-            <label>Minigame Controls (4 Keys + Restart)</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="inputKey0" maxlength="1" style="text-align: center; text-transform: uppercase;">
-                <input type="text" id="inputKey1" maxlength="1" style="text-align: center; text-transform: uppercase;">
-                <input type="text" id="inputKey2" maxlength="1" style="text-align: center; text-transform: uppercase;">
-                <input type="text" id="inputKey3" maxlength="1" style="text-align: center; text-transform: uppercase;">
-                <span style="color:var(--pink); font-weight:bold; margin-left:5px;">|</span>
-                <input type="text" id="inputKeyReset" maxlength="1" style="text-align: center; text-transform: uppercase; background:rgba(232,51,74,0.3);" title="Restart Game Key">
+        <div class="settings-category">
+            <h3>🎣 Teto Fishing</h3>
+            <div style="display: flex; gap: 15px; margin-bottom: 0;">
+                <div class="modal-input-group" style="flex:1; margin-bottom: 0;">
+                    <label>Difficulty</label>
+                    <select id="inputFishDiff">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="modal-input-group" style="flex:1; margin-bottom: 0;">
+                    <label>Reel Keybind</label>
+                    <input type="text" id="inputFishKey" maxlength="1" style="text-align: center; text-transform: uppercase;">
+                </div>
             </div>
+            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display:block; margin-top:5px;">(Spacebar and Mouse Click will also always work)</span>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn btn-small" onclick="applySettings()" style="background: var(--highlight-color); color: white;">Save Changes</button>
             <button class="btn btn-small" onclick="document.getElementById('settingsModal').style.display='none'" style="background: transparent;">Cancel</button>
         </div>
@@ -550,10 +610,19 @@
 let gameSettings = {
     musicVolume: 0.4,
     sfxVolume: 1.0,
-    speed: 15, 
-    difficulty: 'normal',
-    keys: ['d', 'f', 'j', 'k'],
-    resetKey: 'r'
+    resetKey: 'r',
+    
+    // Baguette Mania
+    baguetteSpeed: 15, 
+    baguetteDiff: 'normal',
+    baguetteKeys: ['d', 'f', 'j', 'k'],
+    
+    // Pear Shuffle
+    pearDiff: 'normal',
+
+    // Teto Fishing
+    fishingDiff: 'normal',
+    fishingKey: ' '
 };
 
 let currentMusicGainNode = null; 
@@ -562,33 +631,47 @@ function loadSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem('tetoSettings'));
         if (saved) {
-            gameSettings = Object.assign(gameSettings, saved);
-            if (!gameSettings.keys || gameSettings.keys.length !== 4) {
-                gameSettings.keys = ['d', 'f', 'j', 'k']; 
-            }
-            if (!gameSettings.resetKey) gameSettings.resetKey = 'r';
-            if (gameSettings.speed > 30) gameSettings.speed = 15; 
+            // Backwards compatibility migration
+            gameSettings.musicVolume = saved.musicVolume ?? 0.4;
+            gameSettings.sfxVolume = saved.sfxVolume ?? 1.0;
+            gameSettings.resetKey = saved.resetKey ?? 'r';
+            
+            gameSettings.baguetteSpeed = saved.baguetteSpeed ?? saved.speed ?? 15;
+            gameSettings.baguetteDiff = saved.baguetteDiff ?? saved.difficulty ?? 'normal';
+            gameSettings.baguetteKeys = saved.baguetteKeys ?? saved.keys ?? ['d', 'f', 'j', 'k'];
+            
+            gameSettings.pearDiff = saved.pearDiff ?? saved.difficulty ?? 'normal';
+            
+            gameSettings.fishingDiff = saved.fishingDiff ?? saved.difficulty ?? 'normal';
+            gameSettings.fishingKey = saved.fishingKey ?? ' ';
         }
     } catch(e) {}
 }
 
 function openSettingsPanel() {
+    // Audio & Global
     document.getElementById('inputMusicVol').value = gameSettings.musicVolume * 100;
     document.getElementById('musicVolDisp').innerText = Math.round(gameSettings.musicVolume * 100);
-    
     document.getElementById('inputSfxVol').value = gameSettings.sfxVolume * 100;
     document.getElementById('sfxVolDisp').innerText = Math.round(gameSettings.sfxVolume * 100);
-    
-    document.getElementById('inputSpeed').value = gameSettings.speed;
-    document.getElementById('speedDisp').innerText = gameSettings.speed;
-    
-    document.getElementById('inputDiff').value = gameSettings.difficulty;
-
-    document.getElementById('inputKey0').value = gameSettings.keys[0];
-    document.getElementById('inputKey1').value = gameSettings.keys[1];
-    document.getElementById('inputKey2').value = gameSettings.keys[2];
-    document.getElementById('inputKey3').value = gameSettings.keys[3];
     document.getElementById('inputKeyReset').value = gameSettings.resetKey;
+
+    // Baguette
+    document.getElementById('inputBagDiff').value = gameSettings.baguetteDiff;
+    document.getElementById('inputBagSpeed').value = gameSettings.baguetteSpeed;
+    document.getElementById('speedDisp').innerText = gameSettings.baguetteSpeed;
+    document.getElementById('inputBagKey0').value = gameSettings.baguetteKeys[0];
+    document.getElementById('inputBagKey1').value = gameSettings.baguetteKeys[1];
+    document.getElementById('inputBagKey2').value = gameSettings.baguetteKeys[2];
+    document.getElementById('inputBagKey3').value = gameSettings.baguetteKeys[3];
+
+    // Pear
+    document.getElementById('inputPearDiff').value = gameSettings.pearDiff;
+
+    // Fishing
+    document.getElementById('inputFishDiff').value = gameSettings.fishingDiff;
+    // Special handling so spacebar shows clearly instead of blank
+    document.getElementById('inputFishKey').value = gameSettings.fishingKey === ' ' ? 'SPACE' : gameSettings.fishingKey;
 
     document.getElementById('settingsModal').style.display = 'flex';
 }
@@ -596,15 +679,22 @@ function openSettingsPanel() {
 function applySettings() {
     gameSettings.musicVolume = parseInt(document.getElementById('inputMusicVol').value) / 100;
     gameSettings.sfxVolume = parseInt(document.getElementById('inputSfxVol').value) / 100;
-    
-    gameSettings.speed = parseInt(document.getElementById('inputSpeed').value);
-    gameSettings.difficulty = document.getElementById('inputDiff').value;
-
-    gameSettings.keys[0] = document.getElementById('inputKey0').value.toLowerCase() || 'd';
-    gameSettings.keys[1] = document.getElementById('inputKey1').value.toLowerCase() || 'f';
-    gameSettings.keys[2] = document.getElementById('inputKey2').value.toLowerCase() || 'j';
-    gameSettings.keys[3] = document.getElementById('inputKey3').value.toLowerCase() || 'k';
     gameSettings.resetKey = document.getElementById('inputKeyReset').value.toLowerCase() || 'r';
+    
+    gameSettings.baguetteSpeed = parseInt(document.getElementById('inputBagSpeed').value);
+    gameSettings.baguetteDiff = document.getElementById('inputBagDiff').value;
+    gameSettings.baguetteKeys[0] = document.getElementById('inputBagKey0').value.toLowerCase() || 'd';
+    gameSettings.baguetteKeys[1] = document.getElementById('inputBagKey1').value.toLowerCase() || 'f';
+    gameSettings.baguetteKeys[2] = document.getElementById('inputBagKey2').value.toLowerCase() || 'j';
+    gameSettings.baguetteKeys[3] = document.getElementById('inputBagKey3').value.toLowerCase() || 'k';
+
+    gameSettings.pearDiff = document.getElementById('inputPearDiff').value;
+
+    gameSettings.fishingDiff = document.getElementById('inputFishDiff').value;
+    
+    let rawFishKey = document.getElementById('inputFishKey').value.toLowerCase();
+    if (rawFishKey === 'space' || rawFishKey === '') rawFishKey = ' ';
+    gameSettings.fishingKey = rawFishKey;
 
     if (currentMusicGainNode) {
         currentMusicGainNode.gain.value = gameSettings.musicVolume;
@@ -617,7 +707,7 @@ function applySettings() {
 }
 
 // ══════════════════════════════════════════
-//  SYNTHESIZED SOUND EFFECTS (Web Audio API)
+//  SYNTHESIZED SOUND EFFECTS
 // ══════════════════════════════════════════
 const sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -660,15 +750,6 @@ function playSound(type) {
         osc.start(now);
         osc.stop(now + 0.2);
     } 
-    else if (type === 'minigame') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.linearRampToValueAtTime(800, now + 0.3);
-        gainNode.gain.setValueAtTime(0.05 * vol, now);
-        gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
-        osc.start(now);
-        osc.stop(now + 0.3);
-    }
     else if (type === 'prestige') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(400, now);
@@ -704,7 +785,7 @@ let ultimate = {
     isActive: false,
     timer: 0,
     duration: 10,
-    requirement: 100 // 100 manual clicks required to fill
+    requirement: 100 
 };
 
 const upgrades = [
@@ -720,7 +801,8 @@ const upgrades = [
 ];
 
 const permUpgrades = [
-    { id:'perm1', name:'+10% All Production', icon:'👑', desc:'Permanently boosts TPS & TPC.', baseCost:10, effect:0.10, count:0 }
+    { id:'perm1', name:'+10% All Production', icon:'👑', desc:'Permanently boosts TPS & TPC.', baseCost:10, effect:0.10, count:0 },
+    { id:'pond', name:'Teto\'s Pond', icon:'🎣', desc:'Unlocks the Fishing Minigame.', baseCost:20, effect:0, count:0, max: 1 }
 ];
 
 function getCost(upg) { return Math.floor(upg.baseCost * Math.pow(1.15, upg.count)); }
@@ -765,6 +847,7 @@ function initPermUpgrades() {
             </div>
         `;
         div.addEventListener('click', () => {
+            if (upg.max && upg.count >= upg.max) return; 
             const currentCost = upg.baseCost + (upg.count * 10);
             if (state.tetoTokens >= currentCost) buyPermUpgrade(upg, currentCost);
             else playSound('error');
@@ -785,14 +868,12 @@ function updateUpgrades() {
         }
     });
 
-    // Update Baguette Mania Button Potentials
     const concertCount = upgrades.find(u => u.id === 'concert').count;
     const mgBtnSpan = document.querySelector('#minigameBtn span');
     if (mgBtnSpan) {
         mgBtnSpan.innerText = `Costs 20% Tetos (Min 10) | Earn up to ${30 + concertCount * 2}%-${50 + concertCount * 2}%`;
     }
 
-    // Update Pear Shuffle Button Potentials
     const pearCount = upgrades.find(u => u.id === 'bakery').count;
     const pearBtnSpan = document.querySelector('#pearMinigameBtn span');
     if (pearBtnSpan) {
@@ -805,13 +886,30 @@ function updatePermUpgrades() {
     permUpgrades.forEach((upg, i) => {
         const cost = upg.baseCost + (upg.count * 10);
         const canAfford = state.tetoTokens >= cost;
+        const isMaxed = upg.max && upg.count >= upg.max;
         const div = document.getElementById(`perm-${i}`);
         if (div) {
-            div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
-            document.getElementById(`perm-count-${i}`).innerText = `(×${upg.count})`;
-            document.getElementById(`perm-cost-${i}`).innerText = `✨ ${formatNum(cost)} Tokens`;
+            if (isMaxed) {
+                div.className = 'upgrade-item locked';
+                document.getElementById(`perm-count-${i}`).innerText = `(MAX)`;
+                document.getElementById(`perm-cost-${i}`).innerText = `MAXED OUT`;
+            } else {
+                div.className = 'upgrade-item' + (canAfford ? '' : ' locked');
+                document.getElementById(`perm-count-${i}`).innerText = `(×${upg.count})`;
+                document.getElementById(`perm-cost-${i}`).innerText = `✨ ${formatNum(cost)} Tokens`;
+            }
         }
     });
+
+    const pondUpg = permUpgrades.find(u => u.id === 'pond');
+    const fishingBtn = document.getElementById('fishingMinigameBtn');
+    if (fishingBtn) {
+        if (pondUpg && pondUpg.count > 0) {
+            fishingBtn.style.display = 'block';
+        } else {
+            fishingBtn.style.display = 'none';
+        }
+    }
 }
 
 function buyUpgrade(upg) {
@@ -829,6 +927,7 @@ function buyUpgrade(upg) {
 
 function buyPermUpgrade(upg, cost) {
     if (state.tetoTokens < cost) return;
+    if (upg.max && upg.count >= upg.max) return;
     playSound('buy');
     state.tetoTokens -= cost;
     upg.count++;
@@ -852,7 +951,6 @@ function recalcTPS() {
     const studioCount = studioUpg ? studioUpg.count : 0;
     const ultimateMultiplier = 1 + studioCount;
 
-    // Apply Ultimate Multiplier
     if (ultimate.isActive) {
         state.tps *= ultimateMultiplier; 
     }
@@ -864,8 +962,15 @@ function recalcTPS() {
     if (ultimate.isActive) labelText += ` (ULTIMATE ACTIVE ${ultimateMultiplier}x!)`;
     document.getElementById('tpsLabel').textContent = labelText;
     
-    const pct = Math.min(100, (state.tps / 100) * 100);
-    document.getElementById('tpsFill').style.width = pct + '%';
+    if (!ultimate.isActive) {
+        const hasStudio = studioCount > 0;
+        if (hasStudio) {
+            let pct = (ultimate.charge / ultimate.requirement) * 100;
+            document.getElementById('tpsFill').style.width = pct + '%';
+        } else {
+            document.getElementById('tpsFill').style.width = '0%';
+        }
+    }
 }
 
 function formatNum(n) {
@@ -886,9 +991,6 @@ function updateDisplay() {
     document.getElementById('prestigeBtn').disabled = gain < 1;
 }
 
-// ══════════════════════════════════════════
-//  PRESTIGE SYSTEM
-// ══════════════════════════════════════════
 function doPrestige() {
     const gain = Math.floor(state.tetos / 10000);
     if (gain < 1) {
@@ -907,7 +1009,6 @@ function doPrestige() {
     
     upgrades.forEach(upg => upg.count = 0);
     
-    // Reset visual ultimate state
     ultimate.isActive = false;
     ultimate.charge = 0;
     document.getElementById('mainTeto').classList.remove('ultimate-active');
@@ -922,9 +1023,6 @@ function doPrestige() {
     saveLocalGame();
 }
 
-// ══════════════════════════════════════════
-//  CLICK HANDLER
-// ══════════════════════════════════════════
 const mainTeto = document.getElementById('mainTeto');
 mainTeto.addEventListener('click', (e) => {
     playSound('click');
@@ -935,7 +1033,6 @@ mainTeto.addEventListener('click', (e) => {
     const studioUpg = upgrades.find(u => u.id === 'studio');
     const hasStudio = studioUpg && studioUpg.count > 0;
 
-    // --- ULTIMATE METER LOGIC (ON CLICK) ---
     if (hasStudio && !ultimate.isActive) {
         ultimate.charge += 1;
         
@@ -964,9 +1061,6 @@ mainTeto.addEventListener('click', (e) => {
     spawnClickParticles(e.clientX, e.clientY);
 });
 
-// ══════════════════════════════════════════
-//  GAME LOOP (TPS & ULTIMATE GAUGE DRAIN)
-// ══════════════════════════════════════════
 let lastTime = 0;
 function gameLoop(ts) {
     const dt = (ts - lastTime) / 1000;
@@ -977,12 +1071,10 @@ function gameLoop(ts) {
         state.totalTetos += gained;
 
         if (ultimate.isActive) {
-            // Drain ultimate gauge over time
             ultimate.timer -= dt;
             let pct = Math.max(0, (ultimate.timer / ultimate.duration) * 100);
             document.getElementById('tpsFill').style.width = pct + '%';
 
-            // End Ultimate
             if (ultimate.timer <= 0) {
                 ultimate.isActive = false;
                 ultimate.charge = 0;
@@ -1000,9 +1092,6 @@ function gameLoop(ts) {
 }
 requestAnimationFrame(gameLoop);
 
-// ══════════════════════════════════════════
-//  EASTER EGG (DEV ADMIN PANEL)
-// ══════════════════════════════════════════
 let secretBuffer = "";
 const secretCode = "setsoku";
 
@@ -1046,9 +1135,6 @@ function applyAdminChanges() {
     saveLocalGame();
 }
 
-// ══════════════════════════════════════════
-//  SAVE / LOAD SYSTEM (COOKIE CLICKER STYLE)
-// ══════════════════════════════════════════
 function getSaveString() {
     const save = {
         state: state,
@@ -1068,10 +1154,9 @@ function applySaveString(str) {
         }
         
         Object.assign(state, save.state);
-        save.upgrades.forEach((val, i) => upgrades[i].count = val);
-        save.permUpgrades.forEach((val, i) => permUpgrades[i].count = val);
+        save.upgrades.forEach((val, i) => { if(upgrades[i]) upgrades[i].count = val; });
+        save.permUpgrades.forEach((val, i) => { if(permUpgrades[i]) permUpgrades[i].count = val; });
         
-        // Reset ultimate visual state on load to prevent bugs
         ultimate.isActive = false;
         ultimate.charge = 0;
         document.getElementById('mainTeto').classList.remove('ultimate-active');
@@ -1148,9 +1233,6 @@ function resetGame() {
     }
 }
 
-// ══════════════════════════════════════════
-//  VISUAL EFFECTS
-// ══════════════════════════════════════════
 function spawnFloatText(text, x, y) {
     const el = document.createElement('div');
     el.className = 'float-text';
@@ -1228,76 +1310,60 @@ function spawnClickParticles(cx, cy) {
     }
 }
 
-// ══════════════════════════════════════════
-//  MINIGAME LAUNCHERS
-// ══════════════════════════════════════════
-
 // 1. BAGUETTE MANIA
 document.getElementById('minigameBtn').addEventListener('click', () => {
     const minCost = 10;
     const cost = Math.max(minCost, Math.floor(state.tetos * 0.2));
-    
     if(state.tetos < cost) {
-        playSound('error');
-        spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50);
-        return;
+        playSound('error'); spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50); return;
     }
-    
     playSound('minigame');
-    state.tetos -= cost;
-    updateDisplay();
-    spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
+    state.tetos -= cost; updateDisplay(); spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
 
     const concertUpg = upgrades.find(u => u.id === 'concert');
-    const concertCount = concertUpg ? concertUpg.count : 0;
-
-    localStorage.setItem('minigameContext', JSON.stringify({
-        wager: cost,
-        concertBoost: concertCount * 0.1
-    }));
+    localStorage.setItem('minigameContext', JSON.stringify({ wager: cost, concertBoost: (concertUpg ? concertUpg.count : 0) * 0.1 }));
 
     const frame = document.getElementById('minigameFrame');
     frame.src = 'minigame.html';
     document.getElementById('minigameModal').classList.add('open');
-
-    frame.onload = () => {
-        frame.focus();
-        if (frame.contentWindow) frame.contentWindow.focus();
-    };
+    frame.onload = () => { frame.focus(); if (frame.contentWindow) frame.contentWindow.focus(); };
 });
 
 // 2. PEAR SHUFFLE
 document.getElementById('pearMinigameBtn').addEventListener('click', () => {
     const minCost = 10;
     const cost = Math.max(minCost, Math.floor(state.tetos * 0.1)); 
-    
     if(state.tetos < cost) {
-        playSound('error');
-        spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50);
-        return;
+        playSound('error'); spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50); return;
     }
-    
     playSound('minigame');
-    state.tetos -= cost;
-    updateDisplay();
-    spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
+    state.tetos -= cost; updateDisplay(); spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
 
     const pearUpg = upgrades.find(u => u.id === 'bakery');
-    const pearCount = pearUpg ? pearUpg.count : 0;
-
-    localStorage.setItem('minigameContext', JSON.stringify({
-        wager: cost,
-        pearBoost: pearCount * 0.2
-    }));
+    localStorage.setItem('minigameContext', JSON.stringify({ wager: cost, pearBoost: (pearUpg ? pearUpg.count : 0) * 0.2 }));
 
     const frame = document.getElementById('minigameFrame');
     frame.src = 'pear_shuffle.html';
     document.getElementById('minigameModal').classList.add('open');
+    frame.onload = () => { frame.focus(); if (frame.contentWindow) frame.contentWindow.focus(); };
+});
 
-    frame.onload = () => {
-        frame.focus();
-        if (frame.contentWindow) frame.contentWindow.focus();
-    };
+// 3. TETO'S POND (FISHING)
+document.getElementById('fishingMinigameBtn').addEventListener('click', () => {
+    const minCost = 10;
+    const cost = Math.max(minCost, Math.floor(state.tetos * 0.15)); 
+    if(state.tetos < cost) {
+        playSound('error'); spawnFloatText(`Need ${minCost} Tetos!`, window.innerWidth / 2, window.innerHeight / 2 + 50); return;
+    }
+    playSound('minigame');
+    state.tetos -= cost; updateDisplay(); spawnFloatText(`-${formatNum(cost)} TETOS`, window.innerWidth / 2, window.innerHeight / 2 + 50);
+
+    localStorage.setItem('minigameContext', JSON.stringify({ wager: cost }));
+
+    const frame = document.getElementById('minigameFrame');
+    frame.src = 'TetoFishing.html';
+    document.getElementById('minigameModal').classList.add('open');
+    frame.onload = () => { frame.focus(); if (frame.contentWindow) frame.contentWindow.focus(); };
 });
 
 document.getElementById('closeMinigame').addEventListener('click', () => {
@@ -1307,14 +1373,11 @@ document.getElementById('closeMinigame').addEventListener('click', () => {
 
 window.addEventListener('message', (e) => {
     if (e.data?.type === 'minigameScore') {
-        
         playSound('prestige'); 
-
         const bonus = e.data.tetosEarned || 0;
         state.tetos += bonus;
         state.totalTetos += bonus;
         
-        // Only update high score if it was Baguette Mania
         if (e.data.score && e.data.score > state.minigameHighScore) {
             state.minigameHighScore = e.data.score;
         }
@@ -1328,7 +1391,10 @@ window.addEventListener('message', (e) => {
     } 
     else if (e.data?.type === 'requestRetry') {
         const minCost = 10;
-        const percentage = e.data.game === 'pear' ? 0.1 : 0.2;
+        let percentage = 0.2;
+        if (e.data.game === 'pear') percentage = 0.1;
+        if (e.data.game === 'fishing') percentage = 0.15;
+
         const cost = Math.max(minCost, Math.floor(state.tetos * percentage));
         
         if (state.tetos >= cost) {
@@ -1338,16 +1404,13 @@ window.addEventListener('message', (e) => {
             saveLocalGame();
             
             const concertUpg = upgrades.find(u => u.id === 'concert');
-            const concertCount = concertUpg ? concertUpg.count : 0;
-
             const pearUpg = upgrades.find(u => u.id === 'bakery');
-            const pearCount = pearUpg ? pearUpg.count : 0;
             
             document.getElementById('minigameFrame').contentWindow.postMessage({ 
                 type: 'retryApproved', 
                 wager: cost, 
-                concertBoost: concertCount * 0.1,
-                pearBoost: pearCount * 0.2
+                concertBoost: (concertUpg ? concertUpg.count : 0) * 0.1,
+                pearBoost: (pearUpg ? pearUpg.count : 0) * 0.2
             }, '*');
         } else {
             playSound('error');
@@ -1356,9 +1419,6 @@ window.addEventListener('message', (e) => {
     }
 });
 
-// ══════════════════════════════════════════
-//  BACKGROUND MUSIC SYSTEM
-// ══════════════════════════════════════════
 let musicStarted = false;
 document.body.addEventListener('click', async () => {
     if (musicStarted) return;
@@ -1386,9 +1446,6 @@ document.body.addEventListener('click', async () => {
     }
 });
 
-// ══════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════
 loadSettings(); 
 initUpgrades();
 initPermUpgrades();
@@ -1398,7 +1455,6 @@ updateDisplay();
 recalcTPS();
 setInterval(() => { updateUpgrades(); updatePermUpgrades(); }, 500);
 
-// Auto-load on open
 window.addEventListener('DOMContentLoaded', loadLocalGame);
 
 </script>

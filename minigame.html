@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spooks | Baguette Mania</title>
     <style>
-        /* --- TETO COLOR PALETTE --- */
         :root {
             --bg-dark: #1a0008;       
             --text-main: #fff5f6;      
@@ -30,9 +29,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: flex-start;
+            min-height: 100vh;
+            height: auto;
+            overflow-y: auto; /* ALLOWS SCROLLING */
+            overflow-x: hidden;
         }
 
         #bg {
@@ -51,6 +52,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            padding: 20px 0;
         }
 
         .header { text-align: center; margin-bottom: 1rem; }
@@ -64,7 +66,9 @@
 
         .stats-panel {
             display: flex;
-            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem 2rem;
             font-size: 1.2rem;
             font-weight: bold;
             background: var(--glass-bg);
@@ -72,11 +76,11 @@
             border-radius: 10px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            margin: 0 10px;
         }
 
         .stat-value { color: var(--highlight-color); display: inline-block; }
 
-        /* VSRG Combo Pulse Animation */
         @keyframes comboPulse {
             0% { transform: scale(1.4); color: #fff; }
             100% { transform: scale(1); color: var(--highlight-color); }
@@ -85,11 +89,12 @@
             animation: comboPulse 0.15s ease-out;
         }
 
-        /* Widened container for 4 lanes */
         .game-container {
             position: relative;
-            width: 450px;
+            width: 95%; /* RESPONSIVE WIDTH */
+            max-width: 450px;
             height: 65vh;
+            min-height: 400px;
             background: rgba(26, 0, 8, 0.8); 
             border: 2px solid var(--glass-border);
             border-radius: 8px;
@@ -97,6 +102,7 @@
             overflow: hidden;
             box-shadow: 0 0 30px rgba(232, 51, 74, 0.15);
             backdrop-filter: blur(5px);
+            margin: 10px auto;
         }
 
         .lane {
@@ -155,7 +161,7 @@
         .note {
             position: absolute;
             top: -50px;
-            font-size: 3rem;
+            font-size: clamp(2rem, 8vw, 3rem); /* SCALES PROPERLY */
             will-change: transform;
             z-index: 3;
             text-shadow: 0 5px 10px rgba(0,0,0,0.5);
@@ -166,7 +172,6 @@
             to { filter: drop-shadow(0 0 15px rgba(255, 107, 122, 1)) brightness(1.2); }
         }
 
-        /* ── CENTRAL GLOBAL JUDGMENT TEXT ── */
         .judgment-text {
             position: absolute;
             top: 40%;
@@ -189,7 +194,6 @@
         .judg-great { color: #5cf68b; text-shadow: 0 0 10px #5cf68b; }
         .judg-miss { color: var(--accent-color); text-shadow: 0 0 10px var(--accent-color); }
 
-        /* --- UI OVERLAYS --- */
         .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -252,6 +256,8 @@
             margin-top: 1rem;
             color: var(--text-muted);
             font-size: 0.9rem;
+            text-align: center;
+            padding: 0 10px;
         }
         kbd {
             background: rgba(255, 179, 187, 0.15);
@@ -290,6 +296,7 @@
         </div>
 
         <div class="game-container" id="gameContainer">
+            <div class="song-info-text" id="songTitleDisplay">Playing: Kurokotei - Galaxy Collapse</div>
             
             <div class="judgment-text" id="globalJudgment"></div>
 
@@ -337,7 +344,6 @@
     </div>
 
     <script>
-        // --- SETTINGS INTEGRATION & VSRG DIFFICULTY TUNING ---
         let sfxVolumeScale = 1.0;
         let FALL_DURATION = 1500; 
         
@@ -345,38 +351,44 @@
         let activeKeys = ['d', 'f', 'j', 'k'];
         let resetKey = 'r';
 
-        // Strict VSRG Hit Windows (Constant across difficulties)
         const HIT_WINDOW_PERFECT = 60; 
         const HIT_WINDOW_GREAT = 120; 
 
         try {
             const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
             if (savedSettings) {
-                sfxVolumeScale = savedSettings.sfxVolume;
+                sfxVolumeScale = savedSettings.sfxVolume ?? 1.0;
                 
-                // OSU!MANIA SCROLL SPEED LOGIC
-                let osuSpeed = savedSettings.speed || 15;
+                let osuSpeed = savedSettings.baguetteSpeed ?? savedSettings.speed ?? 15;
                 if (osuSpeed > 30) osuSpeed = 15; 
                 FALL_DURATION = 15000 / (osuSpeed + 5); 
 
-                difficultyMode = savedSettings.difficulty || 'normal';
+                difficultyMode = savedSettings.baguetteDiff ?? savedSettings.difficulty ?? 'normal';
 
-                if(savedSettings.keys && savedSettings.keys.length === 4) {
+                if(savedSettings.baguetteKeys && savedSettings.baguetteKeys.length === 4) {
+                    activeKeys = savedSettings.baguetteKeys;
+                } else if(savedSettings.keys && savedSettings.keys.length === 4) {
                     activeKeys = savedSettings.keys;
                 }
-                resetKey = savedSettings.resetKey || 'r';
+
+                resetKey = savedSettings.resetKey ?? 'r';
             }
-        } catch(e) { console.warn("Could not load minigame settings:", e); }
+        } catch(e) {}
 
+        if (difficultyMode === 'easy') {
+            document.getElementById('songTitleDisplay').innerText = "Playing: Easy Mode";
+        } else if (difficultyMode === 'normal') {
+            document.getElementById('songTitleDisplay').innerText = "Playing: Normal Mode";
+        } else {
+            document.getElementById('songTitleDisplay').innerText = "Playing: Triumph and Regret [Triumph]";
+        }
 
-        // Update UI with the active keys
         document.getElementById('keyText0').innerText = activeKeys[0];
         document.getElementById('keyText1').innerText = activeKeys[1];
         document.getElementById('keyText2').innerText = activeKeys[2];
         document.getElementById('keyText3').innerText = activeKeys[3];
         document.getElementById('controlsHint').innerHTML = `Use <kbd>${activeKeys[0]}</kbd>, <kbd>${activeKeys[1]}</kbd>, <kbd>${activeKeys[2]}</kbd>, and <kbd>${activeKeys[3]}</kbd> to play. Press <kbd>${resetKey}</kbd> to restart.`;
 
-        // --- AUDIO SETUP ---
         const sfxTap = new Audio('sounds/tap.mp3');         
         const sfxHit = new Audio('sounds/hit.mp3');         
         const sfxMiss = new Audio('sounds/miss.mp3');       
@@ -390,9 +402,8 @@
         function playSound(audioObj) {
             let clone = audioObj.cloneNode();
             clone.volume = audioObj.volume * sfxVolumeScale;
-            clone.play().catch(e => console.warn("Audio play failed:", e));
+            clone.play().catch(e => {});
         }
-        // -------------------
 
         const resultScreen = document.getElementById('resultScreen');
         
@@ -430,7 +441,6 @@
             let time = 2000; 
             let idCounter = 0;
             
-            // MUSICAL SEQUENCER
             let BPM = (difficultyMode === 'hard') ? 170 : (difficultyMode === 'normal' ? 160 : 150);
             let msPerBeat = 60000 / BPM;
             let prevLane = -1;
@@ -448,7 +458,6 @@
                     let l1;
                     do { l1 = Math.floor(Math.random() * 4); } while (l1 === prevLane);
 
-                    // OPTIMIZATION: Pre-calculate spawn and miss times so gameLoop does no math!
                     notes.push({ 
                         id: idCounter++, 
                         time: time, 
@@ -486,14 +495,12 @@
             cancelAnimationFrame(animationFrameId);
             document.querySelectorAll('.note').forEach(n => n.remove());
             
-            // Clear prompts
             globalJudgment.classList.remove('show', 'judg-perfect', 'judg-great', 'judg-miss');
             globalJudgment.style.color = "";
             globalJudgment.style.textShadow = "";
             
             resultScreen.classList.add('hidden');
 
-            // OPTIMIZATION: Cache DOM elements once at start
             trackHeight = lanes[0].clientHeight;
             hitY = trackHeight - 75;
 
@@ -515,7 +522,6 @@
 
             let elapsedTime = currentTime - startTime;
             
-            // Push active notes into queue
             while(nextNoteIndex < chart.length && elapsedTime >= chart[nextNoteIndex].spawnTime) {
                 let note = chart[nextNoteIndex];
                 spawnNoteElement(note);
@@ -523,7 +529,6 @@
                 nextNoteIndex++;
             }
 
-            // OPTIMIZATION: Only loop backwards over visible notes on the screen
             for (let i = activeNotes.length - 1; i >= 0; i--) {
                 let note = activeNotes[i];
 
@@ -567,12 +572,11 @@
             if (e.repeat) return;
             let key = e.key.toLowerCase();
 
-            // Restart Hotkey Listener
             if (key === resetKey) {
                 if (isWaitingForRetry) return;
                 playSound(sfxTap);
                 isWaitingForRetry = true;
-                window.parent.postMessage({ type: 'requestRetry' }, '*');
+                window.parent.postMessage({ type: 'requestRetry', game: 'baguette' }, '*');
                 return;
             }
 
@@ -637,7 +641,6 @@
             indicators[laneIndex].classList.add('active');
             let currentTime = performance.now() - startTime;
             
-            // OPTIMIZATION: Only search the tiny active notes array instead of the massive chart
             let noteToHit = activeNotes.find(n => n.lane === laneIndex && !n.hit && !n.missed && n.spawned);
             
             if (noteToHit) {
@@ -732,7 +735,6 @@
             window.parent.postMessage({ type: 'minigameScore', score: score, tetosEarned: currentBaseBonus }, '*');
         }
 
-        // Steals focus so keyboard bindings work instantly, then starts the game!
         window.addEventListener('DOMContentLoaded', () => {
             window.focus();
             document.body.focus();

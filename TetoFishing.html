@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spooks | Teto Fishing</title>
+<style>
+    :root {
+        --bg-dark: #1a0008;       
+        --text-main: #fff5f6;      
+        --text-muted: #ffb3bb;     
+        --accent-color: #e8334a; 
+        --highlight-color: #ff6b7a; 
+        --glass-bg: rgba(42, 16, 21, 0.85); 
+        --glass-border: rgba(255, 107, 122, 0.3);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; user-select:none; font-family:'Nunito', sans-serif; }
+    
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden; 
+    }
+
+    #bg {
+        position: fixed; inset: 0; z-index: 0;
+        background: url('images/wallpaper.jpg') center/cover no-repeat;
+        filter: blur(4px) brightness(0.4);
+        transform: scale(1.05);
+    }
+
+    .ui-wrapper {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        padding: 2vh 0;
+    }
+
+    .header { text-align: center; margin-bottom: 2vh; }
+    .header h1 {
+        color: #4aacdd;
+        font-size: 2.2rem;
+        text-shadow: 0 0 10px rgba(74, 172, 221, 0.5);
+        margin-bottom: 0.5rem;
+        font-family: 'Fredoka One', sans-serif; 
+    }
+
+    .status-text {
+        font-size: 1.2rem; font-weight: 800; color: var(--text-main);
+        background: var(--glass-bg); padding: 0.5rem 2rem;
+        border-radius: 10px; border: 1px solid var(--glass-border);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.3s;
+    }
+
+    .game-container {
+        position: relative;
+        width: 95%; max-width: 450px; 
+        height: 55vh; min-height: 300px;
+        background: rgba(26, 0, 8, 0.6); 
+        border: 2px solid var(--glass-border); border-radius: 12px;
+        box-shadow: 0 0 30px rgba(74, 172, 221, 0.15); backdrop-filter: blur(5px);
+        display: flex; justify-content: center; align-items: center;
+        overflow: hidden;
+    }
+
+    /* ── SCENE: WAITING ── */
+    #waitScene {
+        display: flex; flex-direction: column; align-items: center;
+    }
+    #waitTeto {
+        width: 120px;
+        animation: floatBob 2s infinite ease-in-out;
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+    }
+    @keyframes floatBob {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0); }
+    }
+
+    /* ── SCENE: FISHING UI ── */
+    #fishingUI {
+        display: none; width: 100px; height: 90%;
+        background: rgba(0,0,0,0.5); border: 3px solid var(--glass-border); border-radius: 8px;
+        position: relative;
+    }
+
+    #bobberTrack {
+        position: absolute; left: 10px; top: 10px; bottom: 10px; width: 40px;
+        background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;
+    }
+
+    #bobberBar {
+        position: absolute; left: 0; width: 100%; height: 60px; /* Changed via JS */
+        background: rgba(76, 219, 110, 0.5); border: 2px solid #4cdb6e; border-radius: 4px;
+        transition: background 0.1s;
+    }
+    #bobberBar.catching { background: rgba(76, 219, 110, 0.9); box-shadow: 0 0 10px #4cdb6e; }
+
+    #fishIcon {
+        position: absolute; left: 5px; width: 30px; height: 30px;
+        font-size: 1.5rem; line-height: 30px; text-align: center;
+        filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8)); z-index: 5;
+    }
+
+    #progressTrack {
+        position: absolute; right: 10px; top: 10px; bottom: 10px; width: 15px;
+        background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;
+    }
+    #progressFill {
+        position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+        background: linear-gradient(0deg, var(--red) 0%, var(--gold) 50%, #4cdb6e 100%); 
+        border-radius: 4px;
+    }
+
+    /* ── ALERTS & OVERLAYS ── */
+    #biteAlert {
+        position: absolute; font-size: 5rem; color: var(--red); font-family: 'Fredoka One', cursive;
+        text-shadow: 0 0 20px white; display: none; animation: pop 0.3s ease-out; z-index: 30;
+    }
+    @keyframes pop { 0% { transform: scale(0.1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
+    .overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(26, 0, 8, 0.9); display: flex; flex-direction: column;
+        align-items: center; justify-content: center; z-index: 20; text-align: center; padding: 1rem; 
+    }
+    .hidden { display: none !important; }
+
+    .btn {
+        background-color: #2a7aaa; color: white; border: 1px solid #4aacdd;
+        padding: 0.8rem 1.5rem; font-size: 1.1rem; font-weight: bold; border-radius: 8px;
+        cursor: pointer; transition: all 0.2s; margin-top: 1rem; box-shadow: 0 4px 0 #1a4a6e; 
+    }
+    .btn:hover { background-color: #4aacdd; transform: translateY(-3px); box-shadow: 0 7px 15px rgba(74, 172, 221, 0.4); }
+    .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a4a6e; }
+
+    .bonus-text { color: #4cdb6e; font-size: 1.4rem; font-weight: 900; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .controls-hint { margin-top: 2vh; color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 0 10px; }
+    kbd { background: rgba(255, 179, 187, 0.15); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(255, 179, 187, 0.3); color: var(--text-main); text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+    <div id="bg"></div>
+
+    <div class="ui-wrapper">
+        <div class="header">
+            <h1>Teto's Pond</h1>
+            <div class="status-text" id="statusText">Wait for a bite...</div>
+        </div>
+
+        <div class="game-container" id="gameContainer">
+            
+            <div id="waitScene">
+                <img src="images/tetoclick.png" id="waitTeto" alt="Teto Fishing">
+                <div style="font-size: 2.5rem; margin-top: 10px;">🎣</div>
+            </div>
+
+            <div id="biteAlert">!</div>
+
+            <div id="fishingUI">
+                <div id="bobberTrack">
+                    <div id="bobberBar"></div>
+                    <div id="fishIcon">🐟</div>
+                </div>
+                <div id="progressTrack"><div id="progressFill"></div></div>
+            </div>
+
+            <div class="overlay hidden" id="resultScreen">
+                <h2 id="resultTitle">Fish Caught!</h2>
+                <div class="bonus-text" id="bonusText">+0 Tetos Earned!</div>
+                <button class="btn" onclick="returnToProfile()">Claim Tetos</button>
+            </div>
+        </div>
+
+        <div class="controls-hint" id="controlsHint">Hold <kbd id="keyHintTxt">SPACE</kbd> or <kbd>CLICK</kbd> to reel. Press <kbd id="resHintTxt">R</kbd> to restart.</div>
+    </div>
+
+    <script>
+        let sfxVolumeScale = 1.0;
+        let resetKey = 'r';
+        let reelKey = ' ';
+        let fishingDiff = 'normal';
+
+        try {
+            const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
+            if (savedSettings) {
+                sfxVolumeScale = savedSettings.sfxVolume ?? 1.0;
+                resetKey = savedSettings.resetKey ?? 'r';
+                fishingDiff = savedSettings.fishingDiff ?? savedSettings.difficulty ?? 'normal';
+                reelKey = savedSettings.fishingKey ?? ' ';
+            }
+        } catch(e) {}
+
+        document.getElementById('keyHintTxt').innerText = reelKey === ' ' ? 'SPACE' : reelKey.toUpperCase();
+        document.getElementById('resHintTxt').innerText = resetKey.toUpperCase();
+
+        const sfxTap = new Audio('sounds/tap.mp3');         
+        const sfxHit = new Audio('sounds/hit.mp3');         
+        const sfxMiss = new Audio('sounds/miss.mp3');       
+        const sfxComplete = new Audio('sounds/complete.mp3'); 
+
+        sfxTap.volume = 0.3; sfxHit.volume = 0.6; sfxMiss.volume = 0.5; sfxComplete.volume = 0.8;
+
+        function playSound(audioObj) {
+            let clone = audioObj.cloneNode();
+            clone.volume = audioObj.volume * sfxVolumeScale;
+            clone.play().catch(e => {});
+        }
+
+        const statusText = document.getElementById('statusText');
+        const waitScene = document.getElementById('waitScene');
+        const biteAlert = document.getElementById('biteAlert');
+        const fishingUI = document.getElementById('fishingUI');
+        const bobberBar = document.getElementById('bobberBar');
+        const fishIcon = document.getElementById('fishIcon');
+        const progressFill = document.getElementById('progressFill');
+        const resultScreen = document.getElementById('resultScreen');
+        const bobberTrack = document.getElementById('bobberTrack');
+
+        let BAR_HEIGHT = 80;
+        let CATCH_FILL = 25;    
+        let CATCH_DECAY = 10;   
+        let FISH_SMOOTHNESS = 2.5;  
+        let FISH_DIR_CHANGE = 0.02; 
+
+        if (fishingDiff === 'easy') {
+            BAR_HEIGHT = 120; CATCH_FILL = 40; CATCH_DECAY = 5; FISH_SMOOTHNESS = 1.5; FISH_DIR_CHANGE = 0.01;
+        } else if (fishingDiff === 'hard') {
+            BAR_HEIGHT = 45; CATCH_FILL = 15; CATCH_DECAY = 15; FISH_SMOOTHNESS = 3.5; FISH_DIR_CHANGE = 0.04;
+        }
+
+        let phase = 'idle'; 
+        let isWaitingForRetry = false;
+        let currentWager = 0;
+        let currentTetosEarned = 0;
+
+        let animFrame;
+        let lastTime = 0;
+
+        let TRACK_HEIGHT = 300; 
+        const FISH_HEIGHT = 30;
+        let holdingReel = false;
+        
+        let bobberY = 0; 
+        let bobberVel = 0;
+        
+        let fishY = 0; 
+        let fishTargetY = 0;
+
+        let catchProgress = 25; 
+
+        function startGame() {
+            resultScreen.classList.add('hidden');
+            fishingUI.style.display = 'none';
+            waitScene.style.display = 'flex';
+            bobberBar.style.height = BAR_HEIGHT + 'px';
+            
+            let context = { wager: 0 };
+            try {
+                let saved = JSON.parse(localStorage.getItem('minigameContext'));
+                if (saved) context = saved;
+            } catch(e) {}
+            currentWager = context.wager;
+
+            startWaiting();
+        }
+
+        function startWaiting() {
+            phase = 'waiting';
+            statusText.innerText = "Wait for a bite...";
+            statusText.style.color = "var(--text-main)";
+            biteAlert.style.display = 'none';
+
+            let waitTime = 1500 + Math.random() * 3000;
+            setTimeout(() => {
+                if (phase === 'waiting') triggerBite();
+            }, waitTime);
+        }
+
+        let biteTimeout;
+        function triggerBite() {
+            phase = 'bite';
+            playSound(sfxTap);
+            biteAlert.style.display = 'block';
+            statusText.innerText = "CLICK NOW!";
+            statusText.style.color = "var(--highlight-color)";
+
+            biteTimeout = setTimeout(() => {
+                if (phase === 'bite') endRound(false); 
+            }, 1000); 
+        }
+
+        function startReeling() {
+            clearTimeout(biteTimeout);
+            phase = 'reeling';
+            biteAlert.style.display = 'none';
+            waitScene.style.display = 'none';
+            fishingUI.style.display = 'block';
+            statusText.innerText = "Keep the fish in the bar!";
+            statusText.style.color = "#4cdb6e";
+
+            TRACK_HEIGHT = bobberTrack.clientHeight;
+
+            bobberY = TRACK_HEIGHT - BAR_HEIGHT;
+            bobberVel = 0;
+            fishY = TRACK_HEIGHT - FISH_HEIGHT;
+            fishTargetY = Math.random() * (TRACK_HEIGHT - FISH_HEIGHT);
+            catchProgress = 25; 
+
+            lastTime = performance.now();
+            animFrame = requestAnimationFrame(reelLoop);
+        }
+
+        function reelLoop(time) {
+            if (phase !== 'reeling') return;
+            let dt = (time - lastTime) / 1000;
+            lastTime = time;
+
+            if (dt > 0.1) dt = 0.1; 
+
+            // 1. Bobber Physics (Massively increased Thrust and Gravity for Snappiness!)
+            let bobberAccel = holdingReel ? -14000 : 8000;
+            bobberVel += bobberAccel * dt;
+            bobberVel *= 0.82; // Tight friction so it stops quickly when you let go
+
+            bobberY += bobberVel * dt;
+
+            if (bobberY < 0) { bobberY = 0; bobberVel = Math.max(0, -bobberVel * 0.3); }
+            let maxBobberY = TRACK_HEIGHT - BAR_HEIGHT;
+            if (bobberY > maxBobberY) { bobberY = maxBobberY; bobberVel = Math.min(0, -bobberVel * 0.3); }
+
+            // 2. Fish AI
+            if (Math.random() < FISH_DIR_CHANGE) {
+                fishTargetY = Math.random() * (TRACK_HEIGHT - FISH_HEIGHT);
+            }
+            fishY += (fishTargetY - fishY) * FISH_SMOOTHNESS * dt;
+
+            // 3. Catch Logic
+            let fishCenter = fishY + (FISH_HEIGHT / 2);
+            let inside = (fishCenter >= bobberY && fishCenter <= bobberY + BAR_HEIGHT);
+
+            if (inside) {
+                catchProgress += CATCH_FILL * dt;
+                bobberBar.classList.add('catching');
+            } else {
+                catchProgress -= CATCH_DECAY * dt;
+                bobberBar.classList.remove('catching');
+            }
+
+            catchProgress = Math.max(0, Math.min(100, catchProgress));
+
+            bobberBar.style.top = bobberY + 'px';
+            fishIcon.style.top = fishY + 'px';
+            progressFill.style.height = catchProgress + '%';
+
+            if (catchProgress >= 100) { endRound(true); return; }
+            if (catchProgress <= 0) { endRound(false); return; }
+
+            animFrame = requestAnimationFrame(reelLoop);
+        }
+
+        function endRound(won) {
+            phase = 'ended';
+            cancelAnimationFrame(animFrame);
+            fishingUI.style.display = 'none';
+            biteAlert.style.display = 'none';
+            waitScene.style.display = 'none';
+
+            if (won) {
+                playSound(sfxComplete);
+                document.getElementById('resultTitle').innerText = "Fish Caught!";
+                document.getElementById('resultTitle').style.color = "#4cdb6e";
+                
+                let baseRatio = (fishingDiff === 'hard') ? 3.5 : (fishingDiff === 'normal' ? 2.5 : 1.5);
+                currentTetosEarned = Math.floor(currentWager * baseRatio);
+                
+                document.getElementById('bonusText').innerText = `+${currentTetosEarned} Tetos Earned!`;
+                document.getElementById('bonusText').style.color = "#4cdb6e";
+            } else {
+                playSound(sfxMiss);
+                document.getElementById('resultTitle').innerText = "The fish got away...";
+                document.getElementById('resultTitle').style.color = "var(--accent-color)";
+                currentTetosEarned = 0;
+                document.getElementById('bonusText').innerText = `Wager Lost...`;
+                document.getElementById('bonusText').style.color = "var(--text-muted)";
+            }
+
+            resultScreen.classList.remove('hidden');
+        }
+
+        function handleInputStart() {
+            if (phase === 'bite') startReeling();
+            else if (phase === 'reeling') holdingReel = true;
+        }
+
+        function handleInputEnd() {
+            if (phase === 'reeling') holdingReel = false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            let key = e.key.toLowerCase();
+            
+            if (key === resetKey) {
+                if (isWaitingForRetry) return;
+                playSound(sfxTap);
+                isWaitingForRetry = true;
+                window.parent.postMessage({ type: 'requestRetry', game: 'fishing' }, '*');
+                return;
+            }
+
+            if (key === reelKey || key === ' ' || key === 'spacebar') handleInputStart();
+        });
+        document.addEventListener('keyup', (e) => {
+            let key = e.key.toLowerCase();
+            if (key === reelKey || key === ' ' || key === 'spacebar') handleInputEnd();
+        });
+
+        document.getElementById('gameContainer').addEventListener('mousedown', handleInputStart);
+        document.addEventListener('mouseup', handleInputEnd);
+        document.getElementById('gameContainer').addEventListener('touchstart', (e) => { e.preventDefault(); handleInputStart(); });
+        document.addEventListener('touchend', handleInputEnd);
+
+        function returnToProfile() {
+            window.parent.postMessage({ type: 'minigameScore', tetosEarned: currentTetosEarned }, '*');
+        }
+
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'retryApproved') {
+                isWaitingForRetry = false;
+                localStorage.setItem('minigameContext', JSON.stringify({ wager: e.data.wager }));
+                startGame();
+            } else if (e.data?.type === 'retryDenied') {
+                isWaitingForRetry = false;
+                statusText.innerText = "Not enough Tetos!";
+                statusText.style.color = "var(--accent-color)";
+                playSound(sfxMiss);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.focus(); document.body.focus();
+            startGame();
+        });
+    </script>
+</body>
+</html>

@@ -29,9 +29,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: flex-start;
+            min-height: 100vh;
+            height: auto;
+            overflow-y: auto; 
+            overflow-x: hidden;
         }
 
         #bg {
@@ -50,6 +52,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            padding: 20px 0;
         }
 
         .header { text-align: center; margin-bottom: 1rem; }
@@ -75,7 +78,8 @@
 
         .game-container {
             position: relative;
-            width: 450px;
+            width: 95%; 
+            max-width: 450px;
             height: 400px;
             margin-top: 20px;
             background: rgba(26, 0, 8, 0.6); 
@@ -84,6 +88,7 @@
             overflow: hidden;
             box-shadow: 0 0 30px rgba(92, 246, 139, 0.15);
             backdrop-filter: blur(5px);
+            margin: 20px auto 0 auto;
         }
 
         .pear {
@@ -93,8 +98,12 @@
             
             /* HUGE INVISIBLE HITBOX FIX */
             padding: 30px; 
-            margin: -30px; 
             box-sizing: content-box; 
+            /* Math: Image (80) + Padding (30+30) = 140px total.
+               To perfectly center a 140px box, pull it back by 70px! 
+            */
+            margin-top: -70px; 
+            margin-left: -70px; 
 
             cursor: default;
             transition: left 0.4s ease-in-out, top 0.4s ease-in-out, transform 0.2s, filter 0.2s;
@@ -115,7 +124,6 @@
             cursor: pointer;
         }
 
-        /* --- UI OVERLAYS --- */
         .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -171,6 +179,8 @@
             margin-top: 1rem;
             color: var(--text-muted);
             font-size: 0.9rem;
+            text-align: center;
+            padding: 0 10px;
         }
         kbd {
             background: rgba(255, 179, 187, 0.15);
@@ -204,19 +214,20 @@
     </div>
 
     <script>
-        // --- AUDIO SETUP ---
         let sfxVolumeScale = 1.0;
         let resetKey = 'r';
+        let pearDiff = 'normal';
 
         try {
             const savedSettings = JSON.parse(localStorage.getItem('tetoSettings'));
             if (savedSettings) {
-                sfxVolumeScale = savedSettings.sfxVolume;
-                resetKey = savedSettings.resetKey || 'r';
+                sfxVolumeScale = savedSettings.sfxVolume ?? 1.0;
+                resetKey = savedSettings.resetKey ?? 'r';
+                pearDiff = savedSettings.pearDiff ?? savedSettings.difficulty ?? 'normal';
             }
         } catch(e) {}
 
-        document.getElementById('controlsHint').innerHTML = `Press <kbd>${resetKey}</kbd> to restart.`;
+        document.getElementById('controlsHint').innerHTML = `Press <kbd>${resetKey.toUpperCase()}</kbd> to restart.`;
 
         const sfxTap = new Audio('sounds/tap.mp3');         
         const sfxHit = new Audio('sounds/hit.mp3');         
@@ -231,10 +242,9 @@
         function playSound(audioObj) {
             let clone = audioObj.cloneNode();
             clone.volume = audioObj.volume * sfxVolumeScale;
-            clone.play().catch(e => console.warn("Audio play failed:", e));
+            clone.play().catch(e => {});
         }
 
-        // --- GAME LOGIC ---
         const container = document.getElementById('gameContainer');
         const statusText = document.getElementById('statusText');
         const resultScreen = document.getElementById('resultScreen');
@@ -242,8 +252,8 @@
         const bonusText = document.getElementById('bonusText');
 
         const slotPositions = [
-            {x: 60, y: 70},   {x: 185, y: 70},  {x: 310, y: 70},
-            {x: 60, y: 220},  {x: 185, y: 220}, {x: 310, y: 220}
+            {left: '16.6%', top: '25%'},  {left: '50%', top: '25%'},  {left: '83.3%', top: '25%'},
+            {left: '16.6%', top: '75%'},  {left: '50%', top: '75%'},  {left: '83.3%', top: '75%'}
         ];
 
         let pears = [];
@@ -264,8 +274,8 @@
                 pear.className = 'pear';
                 pear.draggable = false;
                 
-                pear.style.left = `${slotPositions[i].x}px`;
-                pear.style.top = `${slotPositions[i].y}px`;
+                pear.style.left = slotPositions[i].left;
+                pear.style.top = slotPositions[i].top;
                 pear.dataset.currentSlot = i;
                 
                 pear.onclick = () => pickPear(i);
@@ -293,11 +303,17 @@
 
             setTimeout(() => {
                 pears[targetIndex].classList.remove('target-highlight');
-                shufflePears(12);
+                
+                let shuffleSpeed = 450;
+                let shuffleIters = 12;
+                if (pearDiff === 'easy') { shuffleSpeed = 650; shuffleIters = 8; }
+                if (pearDiff === 'hard') { shuffleSpeed = 250; shuffleIters = 18; }
+                
+                shufflePears(shuffleIters, shuffleSpeed);
             }, 2500);
         }
 
-        function shufflePears(iterationsLeft) {
+        function shufflePears(iterationsLeft, speed) {
             if (iterationsLeft <= 0) {
                 isShuffling = false;
                 isChoosing = true;
@@ -314,12 +330,14 @@
                 let assignedSlot = newSlots[i];
                 pear.dataset.currentSlot = assignedSlot;
                 
-                pear.style.left = `${slotPositions[assignedSlot].x}px`;
-                pear.style.top = `${slotPositions[assignedSlot].y}px`;
+                pear.style.transition = `left ${speed*0.9}ms ease-in-out, top ${speed*0.9}ms ease-in-out, transform 0.2s, filter 0.2s`;
+
+                pear.style.left = slotPositions[assignedSlot].left;
+                pear.style.top = slotPositions[assignedSlot].top;
             });
 
             playSound(sfxTap);
-            setTimeout(() => shufflePears(iterationsLeft - 1), 450); 
+            setTimeout(() => shufflePears(iterationsLeft - 1, speed), speed); 
         }
 
         function pickPear(index) {
@@ -327,7 +345,6 @@
             isChoosing = false;
             container.classList.remove('choosing');
             
-            // Read wager context AND pearBoost
             let context = { wager: 0, pearBoost: 0 };
             try {
                 let saved = JSON.parse(localStorage.getItem('minigameContext'));
