@@ -288,7 +288,7 @@
     <div class="ui-wrapper">
         <div class="header">
             <h1>Baguette Mania</h1>
-            <div class="stats-panel">
+            <div class="stats-spanel">
                 <div>Score: <span id="scoreDisplay" class="stat-value">0</span></div>
                 <div>Combo: <span id="comboDisplay" class="stat-value">0</span></div>
                 <div>Acc: <span id="accDisplay" class="stat-value">100%</span></div>
@@ -296,8 +296,6 @@
         </div>
 
         <div class="game-container" id="gameContainer">
-            <div class="song-info-text" id="songTitleDisplay">Playing: Kurokotei - Galaxy Collapse</div>
-            
             <div class="judgment-text" id="globalJudgment"></div>
 
             <div class="overlay hidden" id="resultScreen">
@@ -374,14 +372,6 @@
                 resetKey = savedSettings.resetKey ?? 'r';
             }
         } catch(e) {}
-
-        if (difficultyMode === 'easy') {
-            document.getElementById('songTitleDisplay').innerText = "Playing: Easy Mode";
-        } else if (difficultyMode === 'normal') {
-            document.getElementById('songTitleDisplay').innerText = "Playing: Normal Mode";
-        } else {
-            document.getElementById('songTitleDisplay').innerText = "Playing: Triumph and Regret [Triumph]";
-        }
 
         document.getElementById('keyText0').innerText = activeKeys[0];
         document.getElementById('keyText1').innerText = activeKeys[1];
