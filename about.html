@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | Teto Clicker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #e8334a;
+            --red-light: #ff6b7a;
+            --red-dark: #b0213a;
+            --pink: #ffb3bb;
+            --cream: #fff5f6;
+            --dark: #1a0a0e;
+            --panel-bg: rgba(255,255,255,0.07);
+            --panel-border: rgba(255,255,255,0.15);
+            --glass-strong: rgba(42, 10, 18, 0.85);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--dark);
+            color: var(--cream);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Background ── */
+        #bg {
+            position: fixed; inset: 0; z-index: 0;
+            background: url('images/wallpaper.jpg') center/cover no-repeat;
+            filter: blur(6px) brightness(0.45);
+            transform: scale(1.05);
+        }
+
+        /* ── Animated particles layer ── */
+        #particles {
+            position: fixed; inset: 0; z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 40px; height: 40px;
+            background: url('images/tetoclick.png') center/contain no-repeat;
+            opacity: 0;
+            animation: floatParticle linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0;    }
+            5%   { opacity: 0.12; }
+            95%  { opacity: 0.12; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0;    }
+        }
+
+        /* ── Page layout ── */
+        .page-wrap {
+            position: relative; z-index: 10;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        /* ── Header ── */
+        .site-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(232,51,74,0.2);
+            border: 1px solid rgba(232,51,74,0.4);
+            color: var(--pink);
+            font-family: 'Fredoka One', cursive;
+            font-size: 1rem;
+            padding: 8px 18px;
+            border-radius: 50px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 24px;
+        }
+        .back-btn:hover {
+            background: rgba(232,51,74,0.4);
+            transform: translateX(-3px);
+        }
+
+        .header-logo {
+            width: 90px; height: 90px;
+            filter: drop-shadow(0 0 30px rgba(232,51,74,0.7));
+            margin-bottom: 12px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-8px); }
+        }
+
+        .header-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(2.4rem, 6vw, 3.6rem);
+            color: white;
+            text-shadow: 0 0 40px rgba(232,51,74,0.8), 0 4px 16px rgba(0,0,0,0.6);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .header-sub {
+            font-size: 1.05rem;
+            color: var(--pink);
+            opacity: 0.85;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .divider {
+            width: 120px; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--red), transparent);
+            margin: 16px auto 0;
+            border-radius: 2px;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--red-dark), var(--red-light), var(--red-dark));
+            border-radius: 20px 20px 0 0;
+        }
+        .card:hover {
+            border-color: rgba(232,51,74,0.35);
+        }
+
+        .card-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.5rem;
+            color: var(--pink);
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title .emoji { font-size: 1.4rem; }
+
+        /* ── Game description ── */
+        .desc-text {
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: rgba(255, 245, 246, 0.85);
+        }
+        .desc-text strong { color: var(--red-light); }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .feature-chip {
+            background: rgba(232,51,74,0.12);
+            border: 1px solid rgba(232,51,74,0.3);
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .feature-chip .fc-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+        .feature-chip .fc-label { font-weight: 800; color: var(--cream); display: block; margin-bottom: 2px; }
+        .feature-chip .fc-desc  { color: var(--pink); opacity: 0.8; font-size: 0.85rem; }
+
+        /* ── Version history ── */
+        .version-list { list-style: none; }
+
+        .version-entry {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 16px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            align-items: start;
+        }
+        .version-entry:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .version-tag {
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.95rem;
+            background: rgba(232,51,74,0.2);
+            border: 1px solid rgba(232,51,74,0.4);
+            border-radius: 8px;
+            padding: 4px 10px;
+            color: var(--red-light);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .version-tag.latest {
+            background: rgba(92,246,139,0.15);
+            border-color: rgba(92,246,139,0.4);
+            color: #5cf68b;
+        }
+
+        .version-name {
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--cream);
+            margin-bottom: 4px;
+        }
+        .version-notes {
+            font-size: 0.9rem;
+            color: rgba(255,245,246,0.65);
+            line-height: 1.55;
+        }
+        .version-notes li {
+            margin-left: 1.2em;
+            list-style: disc;
+        }
+
+        /* ── Beta testers ── */
+        .tester-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .tester-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .tester-badge:hover {
+            background: rgba(232,51,74,0.15);
+            border-color: rgba(232,51,74,0.4);
+            transform: translateY(-2px);
+        }
+        .tester-badge .tb-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--red-dark), var(--red));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        /* ── Copyright ── */
+        .copyright-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 20px;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: rgba(255,245,246,0.6);
+        }
+        .copyright-box a {
+            color: var(--red-light);
+            text-decoration: none;
+        }
+        .copyright-box a:hover { text-decoration: underline; }
+        .copyright-box .copy-head {
+            font-weight: 800;
+            color: rgba(255,245,246,0.85);
+            font-size: 0.92rem;
+            margin-bottom: 6px;
+        }
+
+        /* ── Links strip ── */
+        .links-strip {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--cream);
+            font-family: 'Fredoka One', cursive;
+            font-size: 0.95rem;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .link-btn:hover {
+            background: rgba(232,51,74,0.25);
+            border-color: var(--red);
+            transform: translateY(-2px);
+        }
+
+        /* ── Footer ── */
+        .page-footer {
+            text-align: center;
+            margin-top: 48px;
+            color: rgba(255,245,246,0.35);
+            font-size: 0.85rem;
+        }
+        .page-footer strong { color: var(--pink); opacity: 0.7; }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .card { padding: 20px 18px; }
+            .version-entry { grid-template-columns: 90px 1fr; gap: 10px; }
+            .feature-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ── Scroll bar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(232,51,74,0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<div id="particles" aria-hidden="true"></div>
+
+<div class="page-wrap">
+
+    <div class="site-header">
+        <div>
+            <a class="back-btn" href="index.html">← Back to Game</a>
+        </div>
+        <img class="header-logo" src="images/tetoclick.png" alt="Teto">
+        <h1 class="header-title">Teto Clicker</h1>
+        <p class="header-sub">An Incremental Clicker Game</p>
+        <div class="divider"></div>
+    </div>
+
+    <!-- ABOUT THE GAME -->
+    <div class="card">
+        <div class="card-title"><span class="emoji">🥖</span> About the Game</div>
+        <p class="desc-text">
+            <strong>Teto Clicker</strong> is a fan-made incremental idle game starring the beloved UTAU
+            vocal synth <strong>Kasane Teto</strong>. Click Teto to generate Tetos, spend them on
+            upgrades to boost your production, then Prestige to earn permanent Teto Tokens and
+            unlock even more power across multiple runs.
+        </p>
+        <p class="desc-text" style="margin-top: 12px;">
+            This is the developer's first game project built with pure HTML, CSS, and JavaScript,
+            no frameworks needed. It started as a simple clicker and has grown to include
+            <strong>multiple minigames</strong>, a full <strong>prestige system</strong>,
+            <strong>permanent upgrades</strong>, an <strong>Ultimate ability</strong>, and more.
+        </p>
+
+        <div class="feature-grid">
+            <div class="feature-chip">
+                <span class="fc-icon">👆</span>
+                <span class="fc-label">Click &amp; Idle</span>
+                <span class="fc-desc">Click Teto or let upgrades do the work for you.</span>
+            </div>
+            <div class="feature-chip">
+                <span class="fc-icon">⬆️</span>
+                <span class="fc-label">Upgrades</span>
+                <span class="fc-desc">Buy TPS &amp; TPC upgrades that scale infinitely.</span>
+            </div>
+            <div class="feature-chip">
+                <span class="fc-icon">✨</span>
+                <span class="fc-label">Prestige</span>
+                <span class="fc-desc">Reset for Teto Tokens and permanent bonuses.</span>
+            </div>
+            <div class="feature-chip">
+                <span class="fc-icon">🎮</span>
+                <span class="fc-label">Minigames</span>
+                <span class="fc-desc">Baguette Mania, Pear Shuffle &amp; Teto's Pond.</span>
+            </div>
+            <div class="feature-chip">
+                <span class="fc-icon">⚡</span>
+                <span class="fc-label">Ultimate Mode</span>
+                <span class="fc-desc">Charge up &amp; unleash massive multipliers.</span>
+            </div>
+            <div class="feature-chip">
+                <span class="fc-icon">💾</span>
+                <span class="fc-label">Save / Load</span>
+                <span class="fc-label">Import &amp; export save codes to keep progress.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERSION HISTORY -->
+    <div class="card">
+        <div class="card-title"><span class="emoji">📋</span> Version History</div>
+        <ul class="version-list">
+
+            <li class="version-entry">
+                <div>
+                    <div class="version-tag latest">v0.5 BETA</div>
+                    <div style="font-size:0.75rem; color:rgba(255,245,246,0.4); margin-top:4px; text-align:center;">Current</div>
+                </div>
+                <div class="version-body">
+                    <div class="version-name">The About Update</div>
+                    <ul class="version-notes">
+                        <li>Added this About page (description, version history, credits, copyright)</li>
+                        <li>Separated CSS and JavaScript into external files</li>
+                        <li>Polished and finished upgrades functionality</li>
+                        <li>Rebuilt minigame messaging logic for smoother retries</li>
+                        <li>Added post-prestige features and permanent upgrade expansion</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="version-entry">
+                <div>
+                    <div class="version-tag">v0.4 BETA</div>
+                    <div style="font-size:0.75rem; color:rgba(255,245,246,0.4); margin-top:4px; text-align:center;"></div>
+                </div>
+                <div class="version-body">
+                    <div class="version-name">The Fishing Update</div>
+                    <ul class="version-notes">
+                        <li>Added Teto's Pond a new fishing minigame with multiple catch tiers</li>
+                        <li>Added the Permanent Upgrade "Teto's Pond" (requires Teto Tokens to unlock)</li>
+                        <li>Improved minigame wager & retry system across all three games</li>
+                        <li>Settings panel now has per-minigame difficulty and keybind options</li>
+                        <li>Added minigame high score tracking</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="version-entry">
+                <div>
+                    <div class="version-tag">v0.3 BETA</div>
+                </div>
+                <div class="version-body">
+                    <div class="version-name">The Shuffle Update</div>
+                    <ul class="version-notes">
+                        <li>Added Pear Shuffle minigame find the marked pear after shuffling</li>
+                        <li>Introduced Teto Tokens and the Prestige system</li>
+                        <li>Added permanent upgrades panel (+10% All Production stacking)</li>
+                        <li>Ultimate ability added (requires Recording Studio upgrade)</li>
+                        <li>Falling Teto canvas background effect</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="version-entry">
+                <div>
+                    <div class="version-tag">v0.2 BETA</div>
+                </div>
+                <div class="version-body">
+                    <div class="version-name">The Minigame Update</div>
+                    <ul class="version-notes">
+                        <li>Added Baguette Mania a 4-lane rhythm-style minigame</li>
+                        <li>Save / Load system with base64 export codes</li>
+                        <li>Auto-save to localStorage</li>
+                        <li>Settings modal with audio volume and keybind control</li>
+                        <li>Synthesized SFX using the Web Audio API</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="version-entry">
+                <div>
+                    <div class="version-tag">v0.1 BETA</div>
+                </div>
+                <div class="version-body">
+                    <div class="version-name">Initial Release</div>
+                    <ul class="version-notes">
+                        <li>Core clicker loop click Teto to earn Tetos</li>
+                        <li>9 base upgrades (TPS and TPC types)</li>
+                        <li>Stats panel with total Tetos, TPS, TPC display</li>
+                        <li>Click bounce animation and floating "+N" text</li>
+                        <li>Blurred wallpaper background with Teto imagery</li>
+                    </ul>
+                </div>
+            </li>
+
+        </ul>
+    </div>
+
+    <!-- BETA TESTERS -->
+    <div class="card">
+        <div class="card-title"><span class="emoji">🧪</span> Beta Testers</div>
+        <p style="font-size: 0.95rem; color: rgba(255,245,246,0.65); margin-bottom: 16px;">
+            Huge thanks to everyone who played early builds and reported bugs, gave feedback, or just cheered from the sidelines. You made this better. 💕
+        </p>
+        <div class="tester-grid" id="testerGrid">
+            <!-- Populated by JS so it's easy to add names -->
+        </div>
+
+        <p style="font-size: 0.85rem; color: rgba(255,245,246,0.35); margin-top: 18px;">
+            Want to be a beta tester? Join the project on GitHub and open an issue or pull request!
+        </p>
+
+        <div class="links-strip">
+            <a class="link-btn" href="https://github.com/Setsoku-Joshua/Teto-clicker" target="_blank" rel="noopener">
+                <!-- Simple GH icon via SVG inline -->
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                    0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01
+                    1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+                    0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27
+                    2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82
+                    1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01
+                    2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                GitHub Repository
+            </a>
+        </div>
+    </div>
+
+    <!-- COPYRIGHT -->
+    <div class="card">
+        <div class="card-title"><span class="emoji">⚖️</span> Copyright &amp; Disclaimer</div>
+        <div class="copyright-box">
+            <p class="copy-head">Fan-Made Project</p>
+            <p>
+                Teto Clicker is a <strong>non-commercial fan game</strong> created by
+                <strong>Setsoku Joshua</strong>. It is not affiliated with, endorsed by, or
+                produced by any official rights holder.
+            </p>
+            <br>
+            <p class="copy-head">Kasane Teto / UTAU</p>
+            <p>
+                Kasane Teto is an UTAU voicebank character originally created by
+                <strong>kkotmijeong &amp; the UTAU community</strong>. All character art, imagery,
+                and assets used in this game belong to their respective creators and are used
+                purely for fan appreciation purposes with no commercial intent.
+            </p>
+            <br>
+            <p class="copy-head">Music &amp; Audio</p>
+            <p>
+                Background music and sound assets used in this game are either original
+                compositions, royalty-free, or fan-made works. Credits for specific tracks are
+                noted in the repository's
+                <a href="https://github.com/Setsoku-Joshua/Teto-clicker" target="_blank" rel="noopener">README</a>.
+                If you are a rights holder and have a concern, please open a GitHub issue.
+            </p>
+            <br>
+            <p class="copy-head">Game Code</p>
+            <p>
+                The game code (HTML, CSS, JavaScript) is written by <strong>Setsoku Joshua</strong>
+                and is open-source under the repository at
+                <a href="https://github.com/Setsoku-Joshua/Teto-clicker" target="_blank" rel="noopener">github.com/Setsoku-Joshua/Teto-clicker</a>.
+                Feel free to fork and learn from it just don't redistribute it as your own original work.
+            </p>
+            <br>
+            <p style="font-size: 0.83rem; color: rgba(255,245,246,0.45);">
+                &copy; 2026 Setsoku Joshua. Teto Clicker v0.5 BETA. Made with 🥖 and love.
+            </p>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <p>Teto Clicker &mdash; <strong>v0.5 BETA</strong> &mdash; A fan game by Setsoku Joshua</p>
+    </div>
+
+</div>
+
+<script>
+    // ── Floating particle spawner ──
+    const particleContainer = document.getElementById('particles');
+    const PARTICLE_COUNT = 12;
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = 28 + Math.random() * 36;
+        p.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            left: ${Math.random() * 100}%;
+            animation-duration: ${14 + Math.random() * 20}s;
+            animation-delay: ${-Math.random() * 20}s;
+            opacity: 0;
+        `;
+        particleContainer.appendChild(p);
+    }
+
+
+    const betaTesters = [
+        { name: 'Setsoku', note: 'Developer' },
+        { name: 'Spooks256', note: 'Playtester' },
+        { name: 'distant_waves', note: 'Playtester' },
+        { name: 'IDan24', note: 'Playtester' },
+        { name: 'oshiimaaa', note: 'Playtester' },
+        { name: 'gdmyaaa', note: 'Playtester' },
+        { name: 'YamJam', note: 'Playtester' },
+        { name: 'CHexa', note: 'Playtester' },
+        { name: 'Zenyth', note: 'Playtester' },
+
+    ];
+
+    const grid = document.getElementById('testerGrid');
+    if (betaTesters.length === 0) {
+        grid.innerHTML = `<p style="color:rgba(255,245,246,0.45); font-size:0.9rem;">No beta testers listed yet be the first!</p>`;
+    } else {
+        betaTesters.forEach(t => {
+            const badge = document.createElement('div');
+            badge.className = 'tester-badge';
+            const initials = t.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            badge.innerHTML = `
+                <div class="tb-avatar">${initials}</div>
+                <span>${t.name}<br><span style="font-size:0.78rem; font-weight:600; color:var(--pink); opacity:0.7;">${t.note}</span></span>
+            `;
+            grid.appendChild(badge);
+        });
+    }
+</script>
+<script>
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const isModal = params.get('modal') === 'true';
+        const backBtn = document.querySelector('.back-btn');
+        if (isModal && backBtn && window.parent && typeof window.parent.closeAboutPanel === 'function') {
+            backBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.parent.closeAboutPanel();
+            });
+            backBtn.href = 'javascript:void(0)';
+        }
+    })();
+</script>
+
+</body>
+</html>
